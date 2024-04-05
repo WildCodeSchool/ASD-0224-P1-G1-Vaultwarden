@@ -67,9 +67,11 @@ apt dist-upgrade
 
 # Check if UFW is installed
 ufw status 2>> /dev/null >&2
-
-
-
+if [[ "$?" -eq 1 ]];then
+ echo "Skipping UFW config as it does not seem to be installed - check log to know more"
+else
+ apt install ufw
+fi
 
 # Remove telemetry and useless layers
 purge_whoopsie() {
