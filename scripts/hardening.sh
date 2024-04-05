@@ -30,7 +30,7 @@ STEP_TEXT=(
 
 echo "List of steps that this script do : "
 for step in "${STEP_TEXT[@]}"; do
-  echo "${step}"
+    echo "${step}"
 done
 
 # Check supported OSes
@@ -48,40 +48,39 @@ fi
 echo "os seem supported"
 
 case "$OS" in
-    debian)
-        # If the versions are not 9, 10, 11
-        # warn user and ask them to proceed with caution
-        DEB_VER_STR=$CODE_NAME
-        if ((VER >= 9 && VER <= 11)); then
-            new_os_version_warning
-        fi
-        ;;
-    ubuntu)
-        # If the versions are not 16.04, 18.04, 18.10, 20.04. 21.04
-        # warn user and ask them to proceed with caution
-        UBT_VER_STR=$CODE_NAME
-        if [[ "$VER" != "16.04" ]] && [[ "$VER" != "18.04" ]] && [[ "$VER" != "18.10" ]] && [[ "$VER" != "20.04" ]] && [[ "$VER" != "21.04" ]]; then
-            echo "new_os_version_warning "${OS}" "${VER}""
-        fi
-        ;;
-    *)
-        os_not_supported
-        exit 1
-        ;;
+debian)
+    # If the versions are not 9, 10, 11
+    # warn user and ask them to proceed with caution
+    DEB_VER_STR=$CODE_NAME
+    if ((VER >= 9 && VER <= 11)); then
+        new_os_version_warning
+    fi
+    ;;
+ubuntu)
+    # If the versions are not 16.04, 18.04, 18.10, 20.04. 21.04
+    # warn user and ask them to proceed with caution
+    UBT_VER_STR=$CODE_NAME
+    if [[ "$VER" != "16.04" ]] && [[ "$VER" != "18.04" ]] && [[ "$VER" != "18.10" ]] && [[ "$VER" != "20.04" ]] && [[ "$VER" != "21.04" ]]; then
+        echo "new_os_version_warning "${OS}" "${VER}""
+    fi
+    ;;
+*)
+    os_not_supported
+    exit 1
+    ;;
 esac
-
 
 apt update
 apt upgrade
 apt dist-upgrade
 
 # Check if UFW is installed
-ufw status 2>> /dev/null >&2
-if [[ "$?" -eq 1 ]];then
- echo "Skipping UFW config as it does not seem to be installed - check log to know more"
+ufw status 2>>/dev/null >&2
+if [[ "$?" -eq 1 ]]; then
+    echo "Skipping UFW config as it does not seem to be installed - check log to know more"
 else
- apt install ufw
- "${STEP}" ufw added
+    apt install ufw
+    "${STEP}" ufw added
 fi
 
 sys_upgrades() {
@@ -118,15 +117,12 @@ purge_telnet() {
 }
 
 purge_nfs() {
-    # This the standard network file sharing for Unix/Linux/BSD
-    # style operating systems.
-    # Unless you require to share data in this manner,
+    # This the standard network file sharing for Unix/Linux/BSD     # Unless you require to share data in this manner,
     # less layers = more sec
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
 }
 
-purge_whoopsie() { # disable telemetry - less layers to add more security
-    # Although whoopsie is useful(a crash log sender to ubuntu)
+purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
 }
@@ -164,7 +160,7 @@ harden_ssh_brute() {
     ufw limit OpenSSH
 }
 
-harden_ssh(){
+harden_ssh() {
     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
 }
 
@@ -194,70 +190,50 @@ process_accounting() {
     touch /var/log/wtmp
     cd
     # To show users' connect times, run ac. To show information about commands previously run by users, run sa. To see the last commands run, run lastcomm.
-    }
-kernel_tuning() {
-    sysctl kernel.randomize_va_space=1
-
-    # Enable IP spoofing protection
-    sysctl net.ipv4.conf.all.rp_filter=1
-
-    # Disable IP source routing
-    sysctl net.ipv4.conf.all.accept_source_route=0
-
-    # Ignoring broadcasts request
-    sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
-
-    # Make sure spoofed packets get logged
-    sysctl net.ipv4.conf.all.log_martians=1
-    sysctl net.ipv4.conf.default.log_martians=1
-
-    # Disable ICMP routing redirects
-    sysctl -w net.ipv4.conf.all.accept_redirects=0
-    sysctl -w net.ipv6.conf.all.accept_redirects=0
-    sysctl -w net.ipv4.conf.all.send_redirects=0
-
-    # Disables the magic-sysrq key
-    sysctl kernel.sysrq=0
-
-    # Turn off the tcp_timestamps
-    sysctl net.ipv4.tcp_timestamps=0
-
-    # Enable TCP SYN Cookie Protection
-    sysctl net.ipv4.tcp_syncookies=1
-
-    # Enable bad error message Protection
-    sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
-
-    # RELOAD WITH NEW SETTINGS
-    sysctl -p
 }
 
-main() {
-    sys_upgrades
-    unattended_upg
-    disable_root
-    purge_telnet
-    purge_nfs
-    purge_whoopsie
-    set_chkrootkit
-    disable_compilers
-    firewall
-    harden_ssh_brute
-    harden_ssh
-    logwatch_reporter
-    process_accounting
-    purge_atd
-    disable_avahi
-    kernel_tuning
-}
 
-main "$@"
+#### Verify what do that part in details 
+# kernel_tuning() {
+#     sysctl kernel.randomize_va_space=1
 
+#     # Enable IP spoofing protection
+#     sysctl net.ipv4.conf.all.rp_filter=1
 
+#     # Disable IP source routing
+#     sysctl net.ipv4.conf.all.accept_source_route=0
+
+#     # Ignoring broadcasts request
+#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
+
+#     # Make sure spoofed packets get logged
+#     sysctl net.ipv4.conf.all.log_martians=1
+#     sysctl net.ipv4.conf.default.log_martians=1
+
+#     # Disable ICMP routing redirects
+#     sysctl -w net.ipv4.conf.all.accept_redirects=0
+#     sysctl -w net.ipv6.conf.all.accept_redirects=0
+#     sysctl -w net.ipv4.conf.all.send_redirects=0
+
+#     # Disables the magic-sysrq key
+#     sysctl kernel.sysrq=0
+
+#     # Turn off the tcp_timestamps
+#     sysctl net.ipv4.tcp_timestamps=0
+
+#     # Enable TCP SYN Cookie Protection
+#     sysctl net.ipv4.tcp_syncookies=1
+
+#     # Enable bad error message Protection
+#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
+
+#     # RELOAD WITH NEW SETTINGS
+#     sysctl -p
+# }
 
 ##############
 
-new_port=2269
+# new_port=2269
 
 # port modification
 #nano /etc/ssh/sshd_config
@@ -272,8 +248,6 @@ new_port=2269
 #### Adapt  [ssh-ddos] part to "enabled = true"
 #/etc/init.d/fail2ban restart
 
-
-
 main() {
     sys_upgrades
     unattended_upg
@@ -290,7 +264,7 @@ main() {
     process_accounting
     purge_atd
     disable_avahi
-    kernel_tuning
+    # kernel_tuning
 }
 
 main "$@"
