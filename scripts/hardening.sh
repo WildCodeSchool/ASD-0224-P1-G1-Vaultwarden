@@ -2,9 +2,17 @@
 
 echo "script started"
 
-red=$'\e[32m\e[0m'
+RED=$'\e[31m'
+GREEN=$'\e[32m'
+YELLOW=$'\e[93m'
+BLUE=$'\e[34m'
+RESET=$'\e[0m'
+# Icons
+STEP="${YELLOW}[+]${RESET}"
+TIP="${GREEN}[!]${RESET}"
+CONCLUSION="${RED}[#]${RESET}"
+
 endc=$'\e[0m' #endc for end-color
-add=$'\e[93m[+]\e[00m'
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -67,14 +75,13 @@ apt update
 apt upgrade
 apt dist-upgrade
 
-
-
 # Check if UFW is installed
 ufw status 2>> /dev/null >&2
 if [[ "$?" -eq 1 ]];then
  echo "Skipping UFW config as it does not seem to be installed - check log to know more"
 else
  apt install ufw
+ "${STEP}" ufw added
 fi
 
 # Remove telemetry and useless layers
@@ -87,14 +94,9 @@ purge_whoopsie() {
 
 ##############
 
-
 new_port=2269
 
-apt update
-apt upgrade
-
 # port modification
-
 nano /etc/ssh/sshd_config
 ### modification in this line to modify port
 service ssh restart
