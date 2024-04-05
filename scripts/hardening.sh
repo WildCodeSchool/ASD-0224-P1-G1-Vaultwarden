@@ -1,7 +1,6 @@
 #!/bin/bash
 
 echo "script started"
-
 RED=$'\e[31m'
 GREEN=$'\e[32m'
 YELLOW=$'\e[93m'
@@ -11,7 +10,6 @@ RESET=$'\e[0m'
 STEP="${YELLOW}[+]${RESET}"
 TIP="${GREEN}[!]${RESET}"
 CONCLUSION="${RED}[#]${RESET}"
-
 endc=$'\e[0m' #endc for end-color
 
 STEP_TEXT=(
@@ -146,19 +144,21 @@ disable_compilers() {
     # unless you are working with a specific one
 }
 
-firewall() {
-    ufw allow ssh
-    ufw allow http
-    ufw deny 23
-    ufw default deny
-    ufw enable
-}
+# Verify what port allow and disallow, can be improved
+# firewall() {
+#     ufw allow ssh
+#     ufw allow http
+#     ufw deny 23
+#     ufw default deny
+#     ufw enable
+# }
 
-harden_ssh_brute() {
-    # Many attackers will try to use your SSH server to brute-force passwords.
-    # This will only allow 6 connections every 30 seconds from the same IP address.
-    ufw limit OpenSSH
-}
+### Verify if using ssh or openssh
+# harden_ssh_brute() {
+#     # Many attackers will try to use your SSH server to brute-force passwords.
+#     # This will only allow 6 connections every 30 seconds from the same IP address.
+#     ufw limit OpenSSH
+# }
 
 harden_ssh() {
     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
