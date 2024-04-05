@@ -1,6 +1,26 @@
 #!/bin/bash
 
 echo "script started"
+
+STEP_TEXT=(
+    "Verify if it's a correct ubuntu version"
+    "Creating new user"
+    "Creating SSH Key for new user"
+    "Securing 'authorized_keys' file"
+    "Enabling SSH-only login"
+    "Reset sources.list to defaults"
+    "Installing required softwares"
+    "Configure UFW"
+    "Configure Fail2Ban"
+    "Changing root password"
+    "Scheduling daily update download"
+)
+
+echo "List of steps that this script do : "
+for step in "${STEP_TEXT[@]}"; do
+  echo "${step}"
+done
+
 # Check supported OSes
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -38,6 +58,25 @@ case "$OS" in
         ;;
 esac
 
+
+apt update
+apt upgrade
+apt dist-upgrade
+
+
+
+# Check if UFW is installed
+ufw status 2>> /dev/null >&2
+
+
+
+
+# Remove telemetry and useless layers
+purge_whoopsie() {
+    # Although whoopsie is useful(a crash log sender to ubuntu)
+    # less layers = more sec
+    apt-get --yes purge whoopsie
+}
 
 
 ##############
