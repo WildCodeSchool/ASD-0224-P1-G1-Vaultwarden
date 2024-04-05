@@ -2,6 +2,10 @@
 
 echo "script started"
 
+red=$'\e[32m\e[0m'
+endc=$'\e[0m' #endc for end-color
+add=$'\e[93m[+]\e[00m'
+
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
     "Creating new user"
