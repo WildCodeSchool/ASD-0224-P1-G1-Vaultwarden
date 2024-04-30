@@ -1,3 +1,4 @@
+#!/bin/bash
 # ================================================= #
 # This script will write the next informations list:
 # - System version
