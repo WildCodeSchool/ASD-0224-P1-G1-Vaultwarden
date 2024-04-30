@@ -26,6 +26,10 @@ STEP_TEXT=(
     "Scheduling daily update download"
 )
 
+echo "The virtualization platform used is : "
+systemd-detect-virt
+
+
 echo "List of steps that this script do : "
 for step in "${STEP_TEXT[@]}"; do
     echo "${step}"
