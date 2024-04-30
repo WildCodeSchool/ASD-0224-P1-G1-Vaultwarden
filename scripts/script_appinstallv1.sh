@@ -1,68 +1,72 @@
 #!/bin/bash
 
-# L administrateur doit connaitre et renseigner le mdp root pour lancer l installation
+# The administrator has to know the root password and add the execution acl to the script before launching it
 
-# Mise à jour sys et app 
-echo "Mise à jour système et des applications en cours, veuillez taper le mot de passe super utilisateur"
+# Sys and app update 
+echo "System update. Please, enter root password when asked to: "
 sudo apt update && sudo apt upgrade -y  
 if [ $? -ne 0 ]; then
-    echo "Echec de la mise à jour. Veuillez vérifier le message d'erreur"
+    echo "Echec de la mise à jour. Please, check the error message."
 fi
-echo "Mise à jour terminée."
+echo "apt updated and ready to run."
 
-# Installation des applications
+# Apps and packages install
 
-echo "Les applications nécessaires au fonctionnement de VaultWarden."
+echo "VaultWarden's required applications are about to be installed."
 
-# Installation de build-essential
-echo "Installation de build-essential en cours..."
+# build-essential install
+echo "Installing build-essential..."
 sudo apt install -qq build-essential
 if [ $? -ne 0 ]; then
-    echo "Echec de l'installation. Veuillez vérifier le message d'erreur"
+    echo "Could not install build-essential. Please, check the error message."
 fi
-echo "Installation terminée."
+echo "Install complete"
 
-# Installation de curl
-echo "Installation de curl en cours..."
+# Installing curl
+echo "Installing curl..."
 sudo apt install -qq curl
 if [ $? -ne 0 ]; then
-    echo "Echec de l'installation. Veuillez vérifier le message d'erreur"
+    echo "Could not install curl. Please, check the error message."
 fi
-echo "Installation terminée."
+echo "Install complete"
 
-# Installation de git
-echo "Installation de git en cours..."
+# Installing git
+echo "Installing git..."
 sudo apt install -qq git 
 if [ $? -ne 0 ]; then
-    echo "Echec de l'installation. Veuillez vérifier le message d'erreur"
+    echo "Could not install git. Please, check the error message."
 fi
-echo "Installation terminée."
+echo "Install complete"
 
-# Installation de nginx pour reverse-proxy
-
+# Installing nginx pour reverse-proxy
+echo "Installing Nginx..."
 sudo apt install -qq nginx 
 if [ $? -ne 0 ]; then
-    echo "Echec de l'installation. Veuillez vérifier le message d'erreur"
+    echo "Could not install nginx. Please, check the error message."
 fi
-echo "Installation terminée."
+echo "Install complete"
 
-# Installation des librairies nécessaires au fonctionnement de Vaultwarden
-echo "Installation des librairies nécessaires au fonctionnement de Vaultwarden"
+# Installing Vaultwarden required libraries
+echo "Installing Vaultwarden required libraries"
 sudo apt install -qq libssl-dev libsqlite3-dev libmariadb libmariadb-dev-compat libpq-dev
 if [ $? -ne 0 ]; then
-    echo "Echec de l'installation. Veuillez vérifier le/s message/s d'erreur"
+    echo "Could not install some or all the libraries. Please, check the error message(s)"
 fi
-echo "Installation terminée."
+echo "Install complete"
 
 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 #nvm use 16
 #npm install -g 8.11
 npm install
 
-# Vérification de l'installation de Node.js
-echo "Vérification de l'installation de Node.js..."
+# Node.js installation check
+echo "Checking Node.js install ..."
 node --version
 npm --version
 
 # log des install faites avec apt il faudrait peut être voir pour l'exploiter, pour l'instant je n'ai pas trouvé mieux
 # nano /var/log/apt/history.log
+
+# Makes the following script executable and runs it
+chmod +x /root/scritps/script_final-log.sh
+/root/scripts/script_final-log.sh
