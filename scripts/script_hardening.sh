@@ -366,6 +366,39 @@ purge_useless_packages() {
 }
 
 
+# AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles.
+# Check if apparmor is installed command is available
+check_apparmor() {
+    if command -v apparmor_status >/dev/null 2>&1; then
+        echo "AppArmor is installed."
+        # Execute apparmor_status with sudo and pipe to grep to check for active profiles
+        if apparmor_status | grep -q "profiles are loaded."; then
+            echo "AppArmor is active."
+        else
+            echo "AppArmor is installed but not active or not functioning correctly."
+        fi
+    else
+        echo "AppArmor is not installed."
+    fi
+}
+
+# Security-Enhanced Linux (SELinux) is a Linux kernel security module that provides a mechanism for supporting access control security policies, including mandatory access controls (MAC). 
+# The NSA Security-enhanced Linux Team describes NSA SELinux as[5] a set of patches to the Linux kernel and utilities to provide a strong, flexible, mandatory access control (MAC) architecture into the major subsystems of the kernel. 
+# Function to check if SELinux is installed
+check_selinux() {
+    if command -v getenforce >/dev/null 2>&1; then
+        echo "SELinux is installed."
+        # Check if SELinux is enforcing, permissive, or disabled
+        echo "SELinux status: $(getenforce)"
+    else
+        echo "SELinux is not installed."
+    fi
+}
+
+# Perform the checks
+check_apparmor
+check_selinux
+
 
 
 
