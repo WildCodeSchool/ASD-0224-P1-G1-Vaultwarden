@@ -313,6 +313,26 @@ disable_compilers() {
 # }
 
 
+# List of packages that are considered insecure and should be removed
+packages=("slapd" "telnet" "rsh-server" "nfs-kernel-server")
+
+
+purge_useless_packages() {
+    for appli in "${packages[@]}"; do
+        if ps aux | grep -v grep | grep -w "${appli}" > /dev/null; then
+            echo "Using ps: $appli is Running"
+            sudo apt-get purge -y "$appli"
+        else
+            echo "Using ps: $appli is Not running"
+        fi
+    done
+}
+
+
+
+
+
+
 
 main() {
     sys_upgrades
@@ -339,3 +359,5 @@ main() {
 }
 
 main "$@"
+
+purge_useless_packages
