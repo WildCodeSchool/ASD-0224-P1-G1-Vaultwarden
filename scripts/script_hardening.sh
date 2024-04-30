@@ -438,6 +438,52 @@ purge_useless_packages
 ##### Add later with adaptation the code below,  
 
 
+
+# PermitTunnel no
+# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
+# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
+
+
+# MaxAuthTries
+# # Signification : Définit le nombre maximum de tentatives d'authentification autorisées par connexion.
+# # Configuration recommandée : Un nombre réduit de tentatives, comme MaxAuthTries 3, aide à prévenir les attaques par force brute.
+
+# ClientAliveInterval et ClientAliveCountMax
+# Usage : Ces paramètres aident à détecter les connexions SSH inactives et à les fermer.
+# Configuration recommandée : ClientAliveInterval 0 et ClientAliveCountMax 2. Cela ferme la connexion si le client reste inactif pendant 15 minutes.
+
+
+# AllowUsers et AllowGroups
+# Usage : Restreint l'accès SSH à certains utilisateurs ou groupes.
+# Configuration recommandée : Utilisez AllowUsers user1 user2 et/ou AllowGroups group1 group2 pour limiter l'accès aux utilisateurs ou groupes spécifiés.
+
+# UsePAM
+# Signification : Active ou désactive l'utilisation des Pluggable Authentication Modules (PAM).
+# Configuration recommandée : La configuration de UsePAM yes peut être appropriée pour des environnements où les fonctionnalités spécifiques de PAM sont souhaitées.
+
+# DenyUsers et DenyGroups
+# Usage : Spécifie les utilisateurs et groupes qui sont explicitement interdits de se connecter via SSH.
+# Configuration recommandée : DenyUsers user3 user4 et/ou DenyGroups group3 group4 pour bloquer l'accès à des utilisateurs ou groupes spécifiques.
+
+# Récapitulatif des valeurs recommandées
+
+# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
+# Paramètre	Valeur recommandée
+# Protocol	2
+# LogLevel	VERBOSE
+# PermitRootLogin	no
+# PasswordAuthentication	no
+# ChallengeResponseAuthentication	no
+# AllowAgentForwarding	no
+# PermitTunnel	no
+# X11Forwarding	no
+# MaxAuthTries	3
+# UsePAM	yes
+# ClientAliveInterval	0
+# ClientAliveCountMax	2
+# LoginGraceTime	300
+
+
 # #!/bin/bash
 # # Script to harden ssh on ubuntu/debian server
 # # follow on my blog http://www.coderew.com/hardening_ssh_on_remote_ubuntu_debian_server/ 
@@ -502,3 +548,222 @@ purge_useless_packages
 # echo "Success"
 # exit
 
+
+
+
+
+#  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
+
+#!/bin/bash
+# SSH Hardenning Script
+
+
+
+# echo "Escalating Privilage..."
+# echo "Checking escalation privilage."
+# if [ $UID != 0 ]; then
+#   echo "Sorry. Only the ROOT user can run this program!"
+#   echo "[FAILED]"
+#   exit 0
+# fi
+# echo "[DONE]"
+# echo ""
+
+
+# echo "SSH Policies Hardening..."
+
+# echo " - Backing-up current configuration file."
+# cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
+
+# echo " - Changing value Protocol to 2."
+# if [ $(cat /etc/ssh/sshd_config | grep Protocol | wc -l) -eq 0 ]; then
+#   echo "Protocol 2" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#Protocol [a-zA-Z0-9]*/s/#Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
+#   sed -i -e '1,/Protocol [a-zA-Z0-9]*/s/Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PermitUserEnvironment to no."
+# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
+#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PermitEmptyPasswords to No."
+# if [ $(cat /etc/ssh/sshd_config | grep PermitEmptyPasswords | wc -l) -eq 0 ]; then
+#   echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PermitEmptyPasswords [a-zA-Z0-9]*/s/#PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PermitEmptyPasswords [a-zA-Z0-9]*/s/PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value MaxAuthTries to 6."
+# if [ $(cat /etc/ssh/sshd_config | grep MaxAuthTries | wc -l) -eq 0 ]; then
+#   echo "MaxAuthTries 6" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#MaxAuthTries [a-zA-Z0-9]*/s/#MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
+#   sed -i -e '1,/MaxAuthTries [a-zA-Z0-9]*/s/MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value LoginGraceTime to 2m."
+# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
+#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value ClientAliveInterval to 2m."
+# if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
+#   echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+#   sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value LogLevel to VERBOSE."
+# if [ $(cat /etc/ssh/sshd_config | grep LogLevel | wc -l) -eq 0 ]; then
+#   echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#LogLevel [a-zA-Z0-9]*/s/#LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
+#   sed -i -e '1,/LogLevel [a-zA-Z0-9]*/s/LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PrintLastLog to yes."
+# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
+#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value AllowTcpForwarding to no."
+# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
+#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value X11Forwarding to no."
+# if [ $(cat /etc/ssh/sshd_config | grep X11Forwarding | wc -l) -eq 0 ]; then
+#   echo "X11Forwarding no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#X11Forwarding [a-zA-Z0-9]*/s/#X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/X11Forwarding [a-zA-Z0-9]*/s/X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing SSH Daemon Configuraion File Permissions."
+# chmod 600 /etc/ssh/sshd_config
+
+# echo " - Restarting SSH Daemon."
+# systemctl restart sshd
+
+# echo "[DONE]"
+# exit 0
+
+# echo "Checking escalation privilage."
+# if [ $UID != 0 ]; then
+#   echo "Sorry. Only the ROOT user can run this program!"
+#   echo "[FAILED]"
+#   exit 0
+# fi
+# echo "[DONE]"
+# echo ""
+
+
+# echo "SSH Policies Hardening..."
+
+# echo " - Backing-up current configuration file."
+# cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
+
+# echo " - Changing value Protocol to 2."
+# if [ $(cat /etc/ssh/sshd_config | grep Protocol | wc -l) -eq 0 ]; then
+#   echo "Protocol 2" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#Protocol [a-zA-Z0-9]*/s/#Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
+#   sed -i -e '1,/Protocol [a-zA-Z0-9]*/s/Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PermitUserEnvironment to no."
+# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
+#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PermitEmptyPasswords to No."
+# if [ $(cat /etc/ssh/sshd_config | grep PermitEmptyPasswords | wc -l) -eq 0 ]; then
+#   echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PermitEmptyPasswords [a-zA-Z0-9]*/s/#PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PermitEmptyPasswords [a-zA-Z0-9]*/s/PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value MaxAuthTries to 6."
+# if [ $(cat /etc/ssh/sshd_config | grep MaxAuthTries | wc -l) -eq 0 ]; then
+#   echo "MaxAuthTries 6" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#MaxAuthTries [a-zA-Z0-9]*/s/#MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
+#   sed -i -e '1,/MaxAuthTries [a-zA-Z0-9]*/s/MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value LoginGraceTime to 2m."
+# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
+#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value ClientAliveInterval to 2m."
+# if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
+#   echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+#   sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value LogLevel to VERBOSE."
+# if [ $(cat /etc/ssh/sshd_config | grep LogLevel | wc -l) -eq 0 ]; then
+#   echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#LogLevel [a-zA-Z0-9]*/s/#LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
+#   sed -i -e '1,/LogLevel [a-zA-Z0-9]*/s/LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value PrintLastLog to yes."
+# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
+#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value AllowTcpForwarding to no."
+# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
+#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value X11Forwarding to no."
+# if [ $(cat /etc/ssh/sshd_config | grep X11Forwarding | wc -l) -eq 0 ]; then
+#   echo "X11Forwarding no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#X11Forwarding [a-zA-Z0-9]*/s/#X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/X11Forwarding [a-zA-Z0-9]*/s/X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing SSH Daemon Configuraion File Permissions."
+# chmod 600 /etc/ssh/sshd_config
+
+# echo " - Restarting SSH Daemon."
+# systemctl restart sshd
+
+# echo "[DONE]"
+# exit 0
