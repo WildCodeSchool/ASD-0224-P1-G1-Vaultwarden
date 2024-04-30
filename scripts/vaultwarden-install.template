@@ -23,9 +23,9 @@ apt install -y nodejs
 #Rocket install
 apt install -y pkg-config openssl-sys libssl-dev libmariadb-dev-compat libmariadb-dev 
 
-snap install rustup
+snap install rustup --classic
 
-rustup default stable --classic
+rustup default stable 
 
 cargo run --features sqlite --release
 
