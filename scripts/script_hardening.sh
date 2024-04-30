@@ -94,6 +94,9 @@ unattended_upg() {
     # downsides
     apt-get --yes --force-yes install unattended-upgrades
     dpkg-reconfigure -plow unattended-upgrades
+    apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
+
+
     # This will create the file /etc/apt/apt.conf.d/20auto-upgrades
     # with the following contents:
     #############
@@ -233,6 +236,7 @@ process_accounting() {
 
 
 #### Verify what do that part in details 
+#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
 # kernel_tuning() {
 #     sysctl kernel.randomize_va_space=1
 
@@ -270,10 +274,27 @@ process_accounting() {
 #     sysctl -p
 # }
 
+#### Verify what do that part in details 
+# second_kernel_tunning () {
+#     # Turn on execshield
+#     kernel.exec-shield=1
+#     kernel.randomize_va_space=1
+#     # Enable IP spoofing protection
+#     net.ipv4.conf.all.rp_filter=1
+#     # Disable IP source routing
+#     net.ipv4.conf.all.accept_source_route=0
+#     # Ignoring broadcasts request
+#     net.ipv4.icmp_echo_ignore_broadcasts=1
+#     net.ipv4.icmp_ignore_bogus_error_messages=1
+#     # Make sure spoofed packets get logged
+#     net.ipv4.conf.all.log_martians = 1
+# }
+
+
+
 ##############
 
 # new_port=2269
-
 # port modification
 #nano /etc/ssh/sshd_config
 ### modification in this line to modify port
@@ -314,8 +335,24 @@ disable_compilers() {
 
 
 # List of packages that are considered insecure and should be removed
-packages=("slapd" "telnet" "rsh-server" "nfs-kernel-server")
-
+### List that come from https://freelinuxtutorials.com/top-15-services-to-remove-for-securing-ubuntu-linux/
+### Other list 
+packages=(
+    "xserver-xorg*" # X Windows System this provides the Graphical User Interface or GUI for users to have graphical login access, and interact with a mouse and keyboard. Command to check if X Windows System is installed or not:
+    "slapd" 
+    "telnet" 
+    "telnetd"
+    "rsh-server"  
+    "slapd"  # Lightweight Directory Access Protocol (LDAP) Server is an open and cross platform software protocol that is used for directory services authentication. Command to check if LDAP  is installed or not:
+    "nfs-kernel-server" # Network File System (NFS) -it is a distributed file system protocol that enables user to access remote data and files , retrieval of data from multiple directories and disks across a shared network Command to check if NFS is installed or not:
+    "vsftpd" #    File Transfer Protocol (FTP) Server is a network protocol for transferring of files between computers Command to check if FTP is installed or not: (default installed is the VSFTP)
+    "samba" # . Samba Server it allows system admin to share file systems and directory with Windows desktops, via the Server Message Block (SMB) protocol
+    "nis" #  Network Information Service (NIS) is a client-server directory service protocol used for distributing system configuration files. It is formally known as Yellow Pages.
+    "squid" # HTTP Proxy Server it is a server application that acts as an intermediary for clients requests seeking resources from servers. It can cache data to speed up common HTTP requests. The standard proxy server used in many distributions is the “Squid”.
+    "snmpd" #  SNMP is a network-management protocol that is used to monitor network devices, collect statistics and performance.
+)
+# Check also for the following below :
+# xinetd nis yp-tools tftpd atftpd tftpd-hpa  rsh-redone-server
 
 purge_useless_packages() {
     for appli in "${packages[@]}"; do
