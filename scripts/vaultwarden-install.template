@@ -3,10 +3,14 @@
 apt update
 apt upgrade -y
 
+#Clone vaultwarden repo at "/home"
+cd /home
+git clone https://github.com/dani-garcia/vaultwarden.git
+
 #Docker install
 apt install -y ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc 
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 chmod a+r /etc/apt/keyrings/docker.asc
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
@@ -20,14 +24,25 @@ curl -s https://deb.nodesource.com/setup_16.x | sudo bash
 apt update
 apt install -y nodejs
 
-#Rocket install
-apt install -y pkg-config openssl-sys libssl-dev libmariadb-dev-compat libmariadb-dev 
+#Rocket - Install & Prérequis
+apt install -y pkg-config libssl-dev libmariadb-dev-compat libmariadb-dev gcc
+
+cd /home/vaultwarden
 
 snap install rustup --classic
 
-rustup default stable 
+rustup default stable
 
 cargo run --features sqlite --release
+
+#Build Webservice and extract docker
+cd /home/vaultwarden
+git clone https://github.com/dani-garcia/bw_web_builds.git bw_web_builds
+cd bw_web_builds
+
+apt install -y make
+
+make docker-extract
 
 #Docker uninstall
 apt purge -y docker*
