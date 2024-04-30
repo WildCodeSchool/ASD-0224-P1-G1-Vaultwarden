@@ -38,6 +38,14 @@ if [ $? -ne 0 ]; then
 fi
 echo "Installation terminée."
 
+# Installation de nginx pour reverse-proxy
+
+sudo apt install -qq nginx 
+if [ $? -ne 0 ]; then
+    echo "Echec de l'installation. Veuillez vérifier le message d'erreur"
+fi
+echo "Installation terminée."
+
 # Installation des librairies nécessaires au fonctionnement de Vaultwarden
 echo "Installation des librairies nécessaires au fonctionnement de Vaultwarden"
 sudo apt install -qq libssl-dev libsqlite3-dev libmariadb libmariadb-dev-compat libpq-dev
@@ -47,8 +55,9 @@ fi
 echo "Installation terminée."
 
 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-nvm use 16
-npm install -g 8.11
+#nvm use 16
+#npm install -g 8.11
+npm install
 
 # Vérification de l'installation de Node.js
 echo "Vérification de l'installation de Node.js..."
