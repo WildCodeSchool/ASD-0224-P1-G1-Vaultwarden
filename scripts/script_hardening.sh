@@ -59,7 +59,7 @@ ubuntu)
     # warn user and ask them to proceed with caution
     UBT_VER_STR=$CODE_NAME
     if [[ "$VER" != "16.04" ]] && [[ "$VER" != "18.04" ]] && [[ "$VER" != "18.10" ]] && [[ "$VER" != "20.04" ]] && [[ "$VER" != "21.04" ]]; then
-        echo "new_os_version_warning "${OS}" "${VER}""
+        echo "new_os_version_warning. ⚠️ Think install the new version "${OS}" "${VER}""
     fi
     ;;
 *)
@@ -120,6 +120,8 @@ purge_nfs() {
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
 }
 
+
+
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
@@ -130,35 +132,18 @@ set_chkrootkit() {
     chkrootkit
 }
 
-disable_compilers() {
-    chmod 000 /usr/bin/byacc
-    chmod 000 /usr/bin/yacc
-    chmod 000 /usr/bin/bcc
-    chmod 000 /usr/bin/kgcc
-    chmod 000 /usr/bin/cc
-    chmod 000 /usr/bin/gcc
-    chmod 000 /usr/bin/*c++
-    chmod 000 /usr/bin/*g++
-    # 755 to bring them back online
-    # It is better to restrict access to them
-    # unless you are working with a specific one
-}
 
-# Verify what port allow and disallow, can be improved
-# firewall() {
-#     ufw allow ssh
-#     ufw allow http
-#     ufw deny 23
-#     ufw default deny
-#     ufw enable
-# }
 
 ### Verify if using ssh or openssh
-# harden_ssh_brute() {
-#     # Many attackers will try to use your SSH server to brute-force passwords.
-#     # This will only allow 6 connections every 30 seconds from the same IP address.
-#     ufw limit OpenSSH
-# }
+harden_ssh_brute() {
+    # Many attackers will try to use your SSH server to brute-force passwords.
+    # This will only allow 6 connections every 30 seconds from the same IP address.
+    ufw limit OpenSSH
+}
+
+
+
+
 
 harden_ssh() {
     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
@@ -178,10 +163,58 @@ purge_atd() {
 }
 
 disable_avahi() {
-    # The Avahi daemon provides mDNS/DNS-SD discovery support
+    # Avahi Server is a system that facilitates service discovery on a local network via the mDNS/DNS-SD protocol suite. 
+    # It is a free zeroconf implementation that allows programs to discover and publish services or hosts running on a local network with no specific config.
+    # The Avahi daemon provides mDNS/DNS-SD discovery supportdaemon 
     # (Bonjour/Zeroconf) allowing applications to discover services on the network.
+    # "Every computer that has avahi-daemon (or mdnsresponder) installed will identify itself on the network as 'hostname.local'. For example, my computer 'flute' identifies itself as 'flute.local'."
     update-rc.d avahi-daemon disable
+    systemctl stop avahi-daaemon.service
+    systemctl stop avahi-daemon.socket
+    apt purge avahi-daemon
+    echo "avahi disabled" 
 }
+
+
+# Common Unix Print System (CUPS) : this enables a system to function as a print server
+disable_cups() {
+    apt purge cups
+}
+
+
+# Lightweight Directory Access Protocol (LDAP) Server
+# is an open and cross platform software protocol that is used for directory services authentication.
+
+slap_disable() {
+    if dpkg -l | grep -qw slapd; then
+        echo "slapd is installed. Proceeding with removal."
+        # Using apt-get purge to remove slapd and its configuration files
+        sudo apt-get purge -y slapd
+        echo "slapd has been removed successfully."
+    else
+        echo "slapd is not installed. No action needed."
+    fi
+
+    if ps aux | grep nfsd; then
+    echo "NSF is installed in the computer"
+    apt-get purge -y rpcbind
+    fi
+}
+
+nfs_disable() {
+    if ps aux | grep nfs-kernel-server; then
+    echo "NFS is installed in the machine"
+    apt-get purge -y rpcbind
+    else 
+    echo "NFS is not installed. No action needed."
+    fi
+}
+
+
+
+
+
+
 
 process_accounting() {
     # Linux process accounting keeps track of all sorts of details about which commands have been run on the server, who ran them, when, etc.
@@ -189,6 +222,12 @@ process_accounting() {
     cd /
     touch /var/log/wtmp
     cd
+    echo "Users connect times :"
+    ac
+    echo "Information about commands previously run by users : "
+    sa
+    echo "Last command run by user : "
+    lastcomm
     # To show users' connect times, run ac. To show information about commands previously run by users, run sa. To see the last commands run, run lastcomm.
 }
 
@@ -248,6 +287,33 @@ process_accounting() {
 #### Adapt  [ssh-ddos] part to "enabled = true"
 #/etc/init.d/fail2ban restart
 
+
+disable_compilers() {
+    chmod 000 /usr/bin/byacc
+    chmod 000 /usr/bin/yacc
+    chmod 000 /usr/bin/bcc
+    chmod 000 /usr/bin/kgcc
+    chmod 000 /usr/bin/cc
+    chmod 000 /usr/bin/gcc
+    chmod 000 /usr/bin/*c++
+    chmod 000 /usr/bin/*g++
+    # 755 to bring them back online
+    # It is better to restrict access to them
+    # unless you are working with a specific one
+}
+
+
+# Verify what port allow and disallow, can be improved
+# firewall_setup() {
+#     ufw allow ssh
+#     ufw allow http
+#     ufw deny 23
+#     ufw default deny
+#     ufw enable
+# }
+
+
+
 main() {
     sys_upgrades
     unattended_upg
@@ -256,15 +322,20 @@ main() {
     purge_nfs
     purge_whoopsie
     set_chkrootkit
-    disable_compilers
-    firewall
     harden_ssh_brute
     harden_ssh
     logwatch_reporter
     process_accounting
     purge_atd
     disable_avahi
+    disable_cups
+    disable_compilers
+    firewall_setup
     # kernel_tuning
+
+    # Created by me, need to verify if to preserver or not
+    slap_disable
+    nfs_disable
 }
 
 main "$@"
