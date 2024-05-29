@@ -408,7 +408,8 @@ check_selinux
 harden_sshd_config() {
 
     $PORT=1754
-    
+    CINTERVAL="10m"
+
     echo "Differents variables choosen :"
     echo "Port to $PORT" 
     echo "MaxAuthTries to 5"
@@ -453,23 +454,30 @@ harden_sshd_config() {
         fi
     fi
 
-    # Set LogLevel to VERBOSE
-    if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
-        echo "LogLevel is already set to VERBOSE."
+
+# Set LogLevel to VERBOSE
+if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
+    echo "LogLevel is already set to VERBOSE."
+else
+    # First, try to replace an existing LogLevel line, whether commented or not
+    if grep -q "^LogLevel" "$SSHD_CONFIG"; then
+        sed -i "s/^LogLevel .*/LogLevel VERBOSE/" "$SSHD_CONFIG"
+        echo "LogLevel set to VERBOSE."
     else
-        # Set LogLevel, uncomment if it exists, or add
-        sed -i '/^#LogLevel/ c\LogLevel VERBOSE' "$SSHD_CONFIG"
-        if ! grep -q "^LogLevel" "$SSHD_CONFIG"; then
-            echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
-        fi
+        # If no LogLevel line exists, add it
+        echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
+        echo "LogLevel added as VERBOSE."
     fi
+fi
 
     # Modify default port (22) to X here 1574
     if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
         echo "Port is already set to $PORT."
     else
 =
-        sed -i '/^#Port/ c\Port $PORT' "$SSHD_CONFIG"
+        sed -i "/^#Port/ c\Port $PORT" "$SSHD_CONFIG"
+        sed -i "/^Port [0-9]*/c\Port $PORT" "$SSHD_CONFIG"
+
         if ! grep -q "^Port" "$SSHD_CONFIG"; then
             echo "Port $PORT" >> "$SSHD_CONFIG"
         fi
@@ -488,10 +496,36 @@ harden_sshd_config() {
     
         echo "Debian banner set to no"
     fi
+
+    # ClientAliveInterval
+
+    if grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
+        echo "ClientAliveInterval is already set to $CINTERVAL"
+    else
+        sed -i '/^#DebianBanner/ c\DebianBanner no' "$SSHD_CONFIG"
+        if ! grep -q "^DebianBanner" "$SSHD_CONFIG"; then
+            echo "DebianBanner no" >> "$SSHD_CONFIG"
+        fi
     
+        echo "Debian banner set to no"
+    fi
+
+
+    
+
+echo " - Changing value ClientAliveInterval to 2m."
+if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
+  echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
+else
+  sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+  sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
+fi
+
 
 
 }
+
+
 
 
 # UPnP (Universal Plug and Play)
