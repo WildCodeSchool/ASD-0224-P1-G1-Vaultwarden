@@ -389,7 +389,7 @@ check_selinux
 
 
 # Disable X11 Forwarding in SSH
-disable_x11_forwarding() {
+harden_sshd_config() {
     # Ensure the script is run as root
     if [[ $EUID -ne 0 ]]; then
         echo "This script must be run as root" 1>&2
@@ -417,7 +417,38 @@ disable_x11_forwarding() {
 
         echo "X11 forwarding has been disabled."
     fi
+
+    # Set MaxAuthTries to 5
+    if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
+        echo "MaxAuthTries is already set to 5."
+    else
+        # Set MaxAuthTries, uncomment if it exists, or add
+        sed -i '/^#MaxAuthTries/ c\MaxAuthTries 5' "$SSHD_CONFIG"
+        if ! grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
+            echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
+        fi
+    fi
+
 }
+
+
+
+# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
+# Paramètre	Valeur recommandée
+# Protocol	2
+# LogLevel	VERBOSE
+# PermitRootLogin	no
+# PasswordAuthentication	no
+# ChallengeResponseAuthentication	no
+# AllowAgentForwarding	no
+# PermitTunnel	no
+# X11Forwarding	no
+# MaxAuthTries	3
+# UsePAM	yes
+# ClientAliveInterval	0
+# ClientAliveCountMax	2
+# LoginGraceTime	300
+
 
 
 main() {
@@ -437,7 +468,7 @@ main() {
     disable_cups
     disable_compilers
     firewall_setup
-    disable_x11_forwarding
+    harden_sshd_config
     # kernel_tuning
 
     # Created by me, need to verify if to preserver or not
@@ -455,7 +486,8 @@ purge_useless_packages
 
 
 # PermitTunnel no
-# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
+# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
+# Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
 # # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
 
 
@@ -482,21 +514,6 @@ purge_useless_packages
 
 # Récapitulatif des valeurs recommandées
 
-# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
-# Paramètre	Valeur recommandée
-# Protocol	2
-# LogLevel	VERBOSE
-# PermitRootLogin	no
-# PasswordAuthentication	no
-# ChallengeResponseAuthentication	no
-# AllowAgentForwarding	no
-# PermitTunnel	no
-# X11Forwarding	no
-# MaxAuthTries	3
-# UsePAM	yes
-# ClientAliveInterval	0
-# ClientAliveCountMax	2
-# LoginGraceTime	300
 
 
 # #!/bin/bash
