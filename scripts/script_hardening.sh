@@ -12,6 +12,9 @@ TIP="${GREEN}[!]${RESET}"
 CONCLUSION="${RED}[#]${RESET}"
 endc=$'\e[0m' #endc for end-color
 
+SSHD_CONFIG="/etc/ssh/sshd_config"  
+
+
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
     "Creating new user"
@@ -408,7 +411,6 @@ check_selinux
 harden_sshd_config() {
 
     # Path to the SSHD configuration file
-    SSHD_CONFIG="/etc/ssh/sshd_config"  
     $PORT=1754
     CINTERVAL="10m"
 
@@ -431,9 +433,8 @@ harden_sshd_config() {
         [LogLevel]="VERBOSE"
         [Port]="$PORT"
         [MaxSessions]="9"
-    # KerberosAuthentication no
-    # GSSAPIAuthentication no
-    # ChallengeResponseAuthentication
+        [GSSAPIAuthentication]="no"
+        # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
     # Loop through each setting and apply changes
@@ -558,6 +559,53 @@ harden_sshd_config() {
 
 }
 
+
+# [KerberosOrLocalPassword]="no"
+# [KerberosAuthentication]="no"
+
+
+# UPnP (Universal Plug and Play)
+kerberos_setup_sshd() {
+    # Prompt the user to confirm UPnP deactivation
+   echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
+   read -p "Do you use Kerberos ? (y/n): " kerberos_response
+
+    kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
+
+    if [[ "$kerberos_response" == "y" ]]; then
+        echo "Disabling Kerberos Authentification in sshd_config..."
+
+    if grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
+        echo "KerberosOrLocalPassword is already set to NO."
+    else
+        # Replace or uncomment DebianBanner setting
+        sed -i '/^#*KerberosAuthentication /c\KerberosAuthentication no' "$SSHD_CONFIG"
+        if ! grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
+            echo "KerberosAuthentication no" >> "$SSHD_CONFIG"
+        fi
+        echo "KerberosAuthentication set to no"
+    fi
+
+    if grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
+        echo "KerberosOrLocalPassword is already set to NO."
+    else
+        # Replace or uncomment DebianBanner setting
+        sed -i '/^#*KerberosOrLocalPassword /c\KerberosOrLocalPassword no' "$SSHD_CONFIG"
+        if ! grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
+            echo "KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
+        fi
+        echo "KerberosOrLocalPassword set to no"
+    fi
+
+
+
+
+    elif [[ "$kerberos_response" == "n" ]]; then
+        echo "Kerberos authentification has not been disabled."
+    else
+        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+    fi
+}
 
 
 
