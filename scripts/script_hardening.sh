@@ -484,7 +484,9 @@ harden_sshd_config() {
 # UPnP (Universal Plug and Play)
 upnp_desactivation() {
     # Prompt the user to confirm UPnP deactivation
-    read -p "Do you want to disable UPnP protocol? This may affect services like Plex and devices like TP-Link WiFi routers. Enter Y to disable or N to keep enabled (y/n): " upnp_response
+   echo "Universal Plug and Play (UPnP) allows network devices like media servers and routers to discover each other."
+   echo "Disabling UPnP might impact services like media centers (e.g., Plex) or network devices (e.g., some WiFi routers)."
+   read -p "Do you wish to disable UPnP? (y/n): " upnp_response
 
     # Convert response to lowercase to simplify the conditional check
     upnp_response="${upnp_response,,}"  # ,, converts to lowercase
