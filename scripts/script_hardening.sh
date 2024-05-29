@@ -443,16 +443,24 @@ harden_sshd_config() {
         echo "X11 forwarding has been disabled."
     fi
 
-    # Set MaxAuthTries to 5
+
+    # Check if MaxAuthTries is already set to 5
     if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
         echo "MaxAuthTries is already set to 5."
     else
-        # Set MaxAuthTries, uncomment if it exists, or add
-        sed -i '/^#MaxAuthTries/ c\MaxAuthTries 5' "$SSHD_CONFIG"
-        if ! grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
+        # Attempt to replace any existing MaxAuthTries line
+        if grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
+            # Replace any existing value, regardless of being commented out or not
+            sed -i 's/^#*\s*MaxAuthTries.*/MaxAuthTries 5/' "$SSHD_CONFIG"
+            echo "MaxAuthTries set to 5."
+        else
+            # If no MaxAuthTries line exists, add it
             echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
+            echo "MaxAuthTries added with value 5."
         fi
     fi
+
+    
 
 
 # Set LogLevel to VERBOSE
