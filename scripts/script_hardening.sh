@@ -388,7 +388,23 @@ check_apparmor
 check_selinux
 
 
-# Disable X11 Forwarding in SSH
+# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
+# Paramètre	Valeur recommandée
+# Protocol	2
+# LogLevel	VERBOSE
+# PermitRootLogin	no
+# PasswordAuthentication	no
+# ChallengeResponseAuthentication	no
+# AllowAgentForwarding	no
+# PermitTunnel	no
+# X11Forwarding	no
+# MaxAuthTries	3
+# UsePAM	yes
+# ClientAliveInterval	0
+# ClientAliveCountMax	2
+# LoginGraceTime	300
+
+
 harden_sshd_config() {
     # Ensure the script is run as root
     if [[ $EUID -ne 0 ]]; then
@@ -405,7 +421,7 @@ harden_sshd_config() {
         # Backup the original config file
         cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
 
-        # Set X11Forwarding to no
+        # Disable X11 Forwarding in SSH - Set X11Forwarding to no
         sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
 
         # Check if X11Forwarding line exists and has been changed, if not, add it
@@ -429,25 +445,21 @@ harden_sshd_config() {
         fi
     fi
 
+    # Set LogLevel to VERBOSE
+    if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
+        echo "LogLevel is already set to VERBOSE."
+    else
+        # Set LogLevel, uncomment if it exists, or add
+        sed -i '/^#LogLevel/ c\LogLevel VERBOSE' "$SSHD_CONFIG"
+        if ! grep -q "^LogLevel" "$SSHD_CONFIG"; then
+            echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
+        fi
+    fi
+
 }
 
 
 
-# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
-# Paramètre	Valeur recommandée
-# Protocol	2
-# LogLevel	VERBOSE
-# PermitRootLogin	no
-# PasswordAuthentication	no
-# ChallengeResponseAuthentication	no
-# AllowAgentForwarding	no
-# PermitTunnel	no
-# X11Forwarding	no
-# MaxAuthTries	3
-# UsePAM	yes
-# ClientAliveInterval	0
-# ClientAliveCountMax	2
-# LoginGraceTime	300
 
 
 
