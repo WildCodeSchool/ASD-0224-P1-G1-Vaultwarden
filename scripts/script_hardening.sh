@@ -12,6 +12,12 @@ TIP="${GREEN}[!]${RESET}"
 CONCLUSION="${RED}[#]${RESET}"
 endc=$'\e[0m' #endc for end-color
 
+# Define the remote server credentials
+REMOTE_USER="your_remote_username"
+REMOTE_HOST="your_remote_host"
+REMOTE_PORT="22" # Default SSH port, change if necessary
+SSH_KEY="/path/to/your/private/key"
+
 SSHD_CONFIG="/etc/ssh/sshd_config"  
 
 declare -i PORT
@@ -31,6 +37,10 @@ STEP_TEXT=(
     "Changing root password"
     "Scheduling daily update download"
 )
+
+
+# REMOTE_COMMANDS=$(cat <<'EOF'
+
 
 echo "The virtualization platform used is : "
 systemd-detect-virt
@@ -665,6 +675,13 @@ main "$@"
 purge_useless_packages
 
 
+
+# EOF
+# )
+# # Execute the commands on the remote server
+# ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST "$REMOTE_COMMANDS"
+
+
 ##### Add later with adaptation the code below,  
 
 
@@ -1003,3 +1020,5 @@ purge_useless_packages
 
 # echo "[DONE]"
 # exit 0
+
+

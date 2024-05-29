@@ -7,3 +7,9 @@ Please take note of that, before run the script. To adapt your future connexions
 Or set the port in the script to your current Port 
 PORT=1754
 
+
+## Developpement 
+### Hardening part
+In the hardening scripts, there is a section that can be commented out to facilitate easier development with syntax highlighting in Visual Studio Code.
+When you are developing, you can comment out the "REMOTE_COMMANDS" block at the top and at the bottom of the script. This allows you to leverage the full syntax highlighting and code editing features of your IDE.
+Do ctrl + f "REMOTE_COMMANDS" to find them
