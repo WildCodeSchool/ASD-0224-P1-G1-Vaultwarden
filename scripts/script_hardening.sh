@@ -481,8 +481,25 @@ harden_sshd_config() {
 }
 
 
+# UPnP (Universal Plug and Play)
+upnp_desactivation() {
+    # Prompt the user to confirm UPnP deactivation
+    read -p "Do you want to disable UPnP protocol? This may affect services like Plex and devices like TP-Link WiFi routers. Enter Y to disable or N to keep enabled (y/n): " upnp_response
 
+    # Convert response to lowercase to simplify the conditional check
+    upnp_response="${upnp_response,,}"  # ,, converts to lowercase
 
+    # Check user input and apply the firewall rule if confirmed
+    if [[ "$upnp_response" == "y" ]]; then
+        echo "Disabling UPnP..."
+        ufw deny proto udp from any to any port 1900
+        echo "UPnP has been disabled."
+    elif [[ "$upnp_response" == "n" ]]; then
+        echo "UPnP has not been disabled."
+    else
+        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+    fi
+}
 
 
 main() {
@@ -503,6 +520,7 @@ main() {
     disable_compilers
     firewall_setup
     harden_sshd_config
+    upnp_desactivation
     # kernel_tuning
 
     # Created by me, need to verify if to preserver or not
