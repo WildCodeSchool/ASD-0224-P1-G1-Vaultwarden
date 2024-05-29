@@ -29,7 +29,6 @@ STEP_TEXT=(
 echo "The virtualization platform used is : "
 systemd-detect-virt
 
-
 echo "List of steps that this script do : "
 for step in "${STEP_TEXT[@]}"; do
     echo "${step}"
@@ -100,7 +99,6 @@ unattended_upg() {
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
 
-
     # This will create the file /etc/apt/apt.conf.d/20auto-upgrades
     # with the following contents:
     #############
@@ -127,8 +125,6 @@ purge_nfs() {
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
 }
 
-
-
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
@@ -139,18 +135,12 @@ set_chkrootkit() {
     chkrootkit
 }
 
-
-
 ### Verify if using ssh or openssh
 harden_ssh_brute() {
     # Many attackers will try to use your SSH server to brute-force passwords.
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
 }
-
-
-
-
 
 harden_ssh() {
     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
@@ -181,7 +171,6 @@ disable_avahi() {
     apt purge avahi-daemon
     echo "avahi disabled" 
 }
-
 
 # Common Unix Print System (CUPS) : this enables a system to function as a print server
 disable_cups() {
@@ -216,11 +205,6 @@ nfs_disable() {
     echo "NFS is not installed. No action needed."
     fi
 }
-
-
-
-
-
 
 
 process_accounting() {
@@ -404,9 +388,35 @@ check_apparmor
 check_selinux
 
 
+# Disable X11 Forwarding in SSH
 disable_x11_forwarding() {
-    X11Forwarding no
+    # Ensure the script is run as root
+    if [[ $EUID -ne 0 ]]; then
+        echo "This script must be run as root" 1>&2
+        exit 1
+    fi
 
+    # Path to the SSHD configuration file
+    SSHD_CONFIG="/etc/ssh/sshd_config"  
+
+    if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+        echo "X11 forwarding is already disabled."
+    else
+        # Backup the original config file
+        cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
+
+        # Set X11Forwarding to no
+        sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
+
+        # Check if X11Forwarding line exists and has been changed, if not, add it
+        if ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+            echo "X11Forwarding no" >> "$SSHD_CONFIG"
+        fi
+
+        systemctl restart sshd
+
+        echo "X11 forwarding has been disabled."
+    fi
 }
 
 
@@ -427,6 +437,7 @@ main() {
     disable_cups
     disable_compilers
     firewall_setup
+    disable_x11_forwarding
     # kernel_tuning
 
     # Created by me, need to verify if to preserver or not
