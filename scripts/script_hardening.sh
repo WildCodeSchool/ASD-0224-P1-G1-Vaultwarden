@@ -407,6 +407,8 @@ check_selinux
 
 harden_sshd_config() {
 
+    # Path to the SSHD configuration file
+    SSHD_CONFIG="/etc/ssh/sshd_config"  
     $PORT=1754
     CINTERVAL="10m"
 
@@ -421,118 +423,137 @@ harden_sshd_config() {
         exit 1
     fi
 
-    # Path to the SSHD configuration file
-    SSHD_CONFIG="/etc/ssh/sshd_config"  
+    settings=(
+        [DebianBanner]="no"
+        [ClientAliveInterval]="10m"  # Adjust this to your desired interval
+        [X11Forwarding]="no"
+        [MaxAuthTries]="4"
+        [LogLevel]="VERBOSE"
+        [Port]="$PORT"
+        [MaxSessions]="9"
+    # KerberosAuthentication no
+    # GSSAPIAuthentication no
+    # ChallengeResponseAuthentication
+    )
 
-    if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-        echo "X11 forwarding is already disabled."
-    else
-        # Backup the original config file
-        cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
+    # Loop through each setting and apply changes
+    for setting in "${!settings[@]}"; do
+        value="${settings[$setting]}"
+        setting_regex="^#*$setting .*$"
 
-        # Disable X11 Forwarding in SSH - Set X11Forwarding to no
-        sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-
-        # Check if X11Forwarding is set to yes and change it
-        if grep -q "^X11Forwarding yes" "$SSHD_CONFIG"; then
-            sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-        elif ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-            # If no X11Forwarding line, add it
-            echo "X11Forwarding no" >> "$SSHD_CONFIG"
-        fi
-
-        systemctl restart sshd
-
-        echo "X11 forwarding has been disabled."
-    fi
-
-
-
-    # Check if MaxAuthTries is already set to 5
-    if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
-        echo "MaxAuthTries is already set to 5."
-    else
-        # Attempt to replace any existing MaxAuthTries line
-        if grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
-            # Replace any existing value, regardless of being commented out or not
-            sed -i 's/^#*\s*MaxAuthTries.*/MaxAuthTries 5/' "$SSHD_CONFIG"
-            echo "MaxAuthTries set to 5."
+        # Check if the setting is already correct
+        if grep -q "^$setting $value" "$SSHD_CONFIG"; then
+            echo "$setting is already set to $value."
         else
-            # If no MaxAuthTries line exists, add it
-            echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
-            echo "MaxAuthTries added with value 5."
+            # Replace or uncomment the setting, and set to the desired value
+            sed -i "/$setting_regex/c\\$setting $value" "$SSHD_CONFIG"
+            
+            # Ensure the setting is applied correctly
+            if ! grep -q "^$setting $value" "$SSHD_CONFIG"; then
+                echo "$setting $value" >> "$SSHD_CONFIG"
+            fi
+            echo "$setting set to $value."
         fi
-    fi
+    done
+
+
+#     if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+#         echo "X11 forwarding is already disabled."
+#     else
+#         # Backup the original config file
+#         cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
+
+#         # Disable X11 Forwarding in SSH - Set X11Forwarding to no
+#         sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
+
+#         # Check if X11Forwarding is set to yes and change it
+#         if grep -q "^X11Forwarding yes" "$SSHD_CONFIG"; then
+#             sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
+#         elif ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+#             # If no X11Forwarding line, add it
+#             echo "X11Forwarding no" >> "$SSHD_CONFIG"
+#         fi
+
+#         systemctl restart sshd
+
+#         echo "X11 forwarding has been disabled."
+#     fi
+
+
+
+#     # Check if MaxAuthTries is already set to 5
+#     if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
+#         echo "MaxAuthTries is already set to 5."
+#     else
+#         # Attempt to replace any existing MaxAuthTries line
+#         if grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
+#             # Replace any existing value, regardless of being commented out or not
+#             sed -i 's/^#*\s*MaxAuthTries.*/MaxAuthTries 5/' "$SSHD_CONFIG"
+#             echo "MaxAuthTries set to 5."
+#         else
+#             # If no MaxAuthTries line exists, add it
+#             echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
+#             echo "MaxAuthTries added with value 5."
+#         fi
+#     fi
 
     
 
 
-# Set LogLevel to VERBOSE
-if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
-    echo "LogLevel is already set to VERBOSE."
-else
-    # First, try to replace an existing LogLevel line, whether commented or not
-    if grep -q "^LogLevel" "$SSHD_CONFIG"; then
-        sed -i "s/^LogLevel .*/LogLevel VERBOSE/" "$SSHD_CONFIG"
-        echo "LogLevel set to VERBOSE."
-    else
-        # If no LogLevel line exists, add it
-        echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
-        echo "LogLevel added as VERBOSE."
-    fi
-fi
+#     # Set LogLevel to VERBOSE
+#     if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
+#         echo "LogLevel is already set to VERBOSE."
+#     else
+#         # First, try to replace an existing LogLevel line, whether commented or not
+#         if grep -q "^LogLevel" "$SSHD_CONFIG"; then
+#             sed -i "s/^LogLevel .*/LogLevel VERBOSE/" "$SSHD_CONFIG"
+#             echo "LogLevel set to VERBOSE."
+#         else
+#             # If no LogLevel line exists, add it
+#             echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
+#             echo "LogLevel added as VERBOSE."
+#         fi
+#     fi
 
-    # Modify default port (22) to X here 1574
-    if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
-        echo "Port is already set to $PORT."
-    else
-=
-        sed -i "/^#Port/ c\Port $PORT" "$SSHD_CONFIG"
-        sed -i "/^Port [0-9]*/c\Port $PORT" "$SSHD_CONFIG"
+#     # Modify default port (22) to X here 1574
+#     if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
+#         echo "Port is already set to $PORT."
+#     else
+# =
+#         sed -i "/^#Port/ c\Port $PORT" "$SSHD_CONFIG"
+#         sed -i "/^Port [0-9]*/c\Port $PORT" "$SSHD_CONFIG"
 
-        if ! grep -q "^Port" "$SSHD_CONFIG"; then
-            echo "Port $PORT" >> "$SSHD_CONFIG"
-        fi
+#         if ! grep -q "^Port" "$SSHD_CONFIG"; then
+#             echo "Port $PORT" >> "$SSHD_CONFIG"
+#         fi
     
-        echo "Port fixed to $PORT"
-    fi
+#         echo "Port fixed to $PORT"
+#     fi
 
 
-    if grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
-        echo "DebianBanner is already set to NO."
-    else
-        sed -i '/^#DebianBanner/ c\DebianBanner no' "$SSHD_CONFIG"
-        if ! grep -q "^DebianBanner" "$SSHD_CONFIG"; then
-            echo "DebianBanner no" >> "$SSHD_CONFIG"
-        fi
-    
-        echo "Debian banner set to no"
-    fi
+#     # Set DebianBanner
+#     if grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
+#         echo "DebianBanner is already set to NO."
+#     else
+#         # Replace or uncomment DebianBanner setting
+#         sed -i '/^#*DebianBanner /c\DebianBanner no' "$SSHD_CONFIG"
+#         if ! grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
+#             echo "DebianBanner no" >> "$SSHD_CONFIG"
+#         fi
+#         echo "Debian banner set to no"
+#     fi
 
-    # ClientAliveInterval
-
-    if grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
-        echo "ClientAliveInterval is already set to $CINTERVAL"
-    else
-        sed -i '/^#DebianBanner/ c\DebianBanner no' "$SSHD_CONFIG"
-        if ! grep -q "^DebianBanner" "$SSHD_CONFIG"; then
-            echo "DebianBanner no" >> "$SSHD_CONFIG"
-        fi
-    
-        echo "Debian banner set to no"
-    fi
-
-
-    
-
-echo " - Changing value ClientAliveInterval to 2m."
-if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
-  echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
-else
-  sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-  sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-fi
-
+#     # Set ClientAliveInterval
+#     if grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
+#         echo "ClientAliveInterval is already set to $CINTERVAL."
+#     else
+#         # Replace or uncomment ClientAliveInterval setting
+#         sed -i "/^#*ClientAliveInterval /c\ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"
+#         if ! grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
+#             echo "ClientAliveInterval $CINTERVAL" >> "$SSHD_CONFIG"
+#         fi
+#         echo "ClientAliveInterval set to $CINTERVAL."
+#     fi
 
 
 }
