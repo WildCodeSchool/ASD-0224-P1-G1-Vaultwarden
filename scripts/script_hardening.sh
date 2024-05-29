@@ -468,14 +468,27 @@ harden_sshd_config() {
     if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
         echo "Port is already set to $PORT."
     else
-        # Set LogLevel, uncomment if it exists, or add
+=
         sed -i '/^#Port/ c\Port $PORT' "$SSHD_CONFIG"
         if ! grep -q "^Port" "$SSHD_CONFIG"; then
             echo "Port $PORT" >> "$SSHD_CONFIG"
         fi
     
-    echo "Port fixed to $PORT"
+        echo "Port fixed to $PORT"
     fi
+
+
+    if grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
+        echo "DebianBanner is already set to NO."
+    else
+        sed -i '/^#DebianBanner/ c\DebianBanner no' "$SSHD_CONFIG"
+        if ! grep -q "^DebianBanner" "$SSHD_CONFIG"; then
+            echo "DebianBanner no" >> "$SSHD_CONFIG"
+        fi
+    
+        echo "Debian banner set to no"
+    fi
+    
 
 
 }
@@ -537,6 +550,22 @@ purge_useless_packages
 
 ##### Add later with adaptation the code below,  
 
+
+# https://ittavern.com/ssh-server-hardening/
+
+# Disable tunneling and port forwarding #
+# AllowAgentForwarding no
+# AllowTcpForwarding no
+# PermitTunnel no
+
+# Disabling those functions makes it more difficult to use the server as a jump host to gain access to the connected networks, malicious or not. Most servers do not need those functions enabled, but to learn more, feel free to check my article about SSH tunneling and port forwarding.
+
+# Disable unused authentification methods #
+# KerberosAuthentication no
+# GSSAPIAuthentication no
+# ChallengeResponseAuthentication
+# It highly depends on your needs, but if an authentification method is unused, it should be disabled as it increases the attack surface to exploits and vulnerabilities.
+# Side note: Please ensure you don't disable the only method you can log in to prevent a lockout. 
 
 
 # PermitTunnel no
