@@ -434,6 +434,9 @@ harden_sshd_config() {
         [Port]="$PORT"
         [MaxSessions]="9"
         [GSSAPIAuthentication]="no"
+        [AllowAgentForwarding]="no"
+        [AllowTcpForwarding]="no"
+        # PermitTunnel no
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
@@ -558,11 +561,6 @@ harden_sshd_config() {
 
 
 }
-
-
-# [KerberosOrLocalPassword]="no"
-# [KerberosAuthentication]="no"
-
 
 # UPnP (Universal Plug and Play)
 kerberos_setup_sshd() {
