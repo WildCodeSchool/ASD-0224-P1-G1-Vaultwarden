@@ -488,6 +488,7 @@ harden_sshd_config() {
         [MaxAuthTries]="4"
         [LogLevel]="VERBOSE"
         [Port]="$PORT"
+        [LoginGraceTime]="20"
         [MaxSessions]="9"
         [GSSAPIAuthentication]="no"
         [AllowAgentForwarding]="no"
