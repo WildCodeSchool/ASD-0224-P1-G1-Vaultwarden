@@ -41,6 +41,48 @@ STEP_TEXT=(
 
 # REMOTE_COMMANDS=$(cat <<'EOF'
 
+REMOTE_USER="your_remote_username"
+REMOTE_HOST="your_remote_host"
+REMOTE_PORT="22" # Default SSH port, change if necessary
+SSH_KEY="/path/to/your/private/key"
+EMAIL="your_email@example.com"
+
+read -p "What is your server name ? " SERVER_NAME
+
+# Function to set up SSH key-based authentication using Ed25519
+setup_ssh_ed25519() {
+    local remote_user=$REMOTE_USER
+    local remote_host=$REMOTE_HOST
+    local remote_port=$REMOTE_PORT
+
+    if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
+        echo "Missing required variables: remote_user, remote_host, or email."
+        return 1
+    fi
+
+    # Generate Ed25519 key
+    ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
+
+    # Automatically copy the Ed25519 key to the server
+    ssh-copy-id -i ~/.ssh/id_ed25519_$SERVER_NAME.pub -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
+
+    # SSH into the server to harden SSH configuration
+    ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
+
+        # Restart SSH service
+        sudo systemctl restart sshd
+
+        echo "SSH configuration restarted."
+EOF
+
+    cd ~/.ssh
+    sudo ssh-agent bash
+    ssh-add id_ed25519_$SERVER_NAME
+
+    echo "SSH key-based authentication setup using Ed25519 is complete."
+}
+
+# Call the function to set up SSH key-based authentication
 
 echo "The virtualization platform used is : "
 systemd-detect-virt
@@ -663,6 +705,7 @@ main() {
     firewall_setup
     harden_sshd_config
     upnp_desactivation
+    setup_ssh_ed25519
     # kernel_tuning
 
     # Created by me, need to verify if to preserver or not
