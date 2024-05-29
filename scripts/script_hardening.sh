@@ -857,35 +857,6 @@ purge_useless_packages
 
 #  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
 
-#!/bin/bash
-# SSH Hardenning Script
-
-
-
-# echo "Escalating Privilage..."
-# echo "Checking escalation privilage."
-# if [ $UID != 0 ]; then
-#   echo "Sorry. Only the ROOT user can run this program!"
-#   echo "[FAILED]"
-#   exit 0
-# fi
-# echo "[DONE]"
-# echo ""
-
-
-# echo "SSH Policies Hardening..."
-
-# echo " - Backing-up current configuration file."
-# cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
-
-# echo " - Changing value Protocol to 2."
-# if [ $(cat /etc/ssh/sshd_config | grep Protocol | wc -l) -eq 0 ]; then
-#   echo "Protocol 2" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#Protocol [a-zA-Z0-9]*/s/#Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
-#   sed -i -e '1,/Protocol [a-zA-Z0-9]*/s/Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
-# fi
-
 # echo " - Changing value PermitUserEnvironment to no."
 # if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
 #   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
@@ -894,21 +865,7 @@ purge_useless_packages
 #   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
 # fi
 
-# echo " - Changing value PermitEmptyPasswords to No."
-# if [ $(cat /etc/ssh/sshd_config | grep PermitEmptyPasswords | wc -l) -eq 0 ]; then
-#   echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PermitEmptyPasswords [a-zA-Z0-9]*/s/#PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PermitEmptyPasswords [a-zA-Z0-9]*/s/PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
-# fi
 
-# echo " - Changing value MaxAuthTries to 6."
-# if [ $(cat /etc/ssh/sshd_config | grep MaxAuthTries | wc -l) -eq 0 ]; then
-#   echo "MaxAuthTries 6" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#MaxAuthTries [a-zA-Z0-9]*/s/#MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
-#   sed -i -e '1,/MaxAuthTries [a-zA-Z0-9]*/s/MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
-# fi
 
 # echo " - Changing value LoginGraceTime to 2m."
 # if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
@@ -918,21 +875,6 @@ purge_useless_packages
 #   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
 # fi
 
-# echo " - Changing value ClientAliveInterval to 2m."
-# if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
-#   echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-#   sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value LogLevel to VERBOSE."
-# if [ $(cat /etc/ssh/sshd_config | grep LogLevel | wc -l) -eq 0 ]; then
-#   echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#LogLevel [a-zA-Z0-9]*/s/#LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
-#   sed -i -e '1,/LogLevel [a-zA-Z0-9]*/s/LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
-# fi
 
 # echo " - Changing value PrintLastLog to yes."
 # if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
@@ -950,14 +892,6 @@ purge_useless_packages
 #   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
 # fi
 
-# echo " - Changing value X11Forwarding to no."
-# if [ $(cat /etc/ssh/sshd_config | grep X11Forwarding | wc -l) -eq 0 ]; then
-#   echo "X11Forwarding no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#X11Forwarding [a-zA-Z0-9]*/s/#X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/X11Forwarding [a-zA-Z0-9]*/s/X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
-# fi
-
 # echo " - Changing SSH Daemon Configuraion File Permissions."
 # chmod 600 /etc/ssh/sshd_config
 
@@ -966,109 +900,3 @@ purge_useless_packages
 
 # echo "[DONE]"
 # exit 0
-
-# echo "Checking escalation privilage."
-# if [ $UID != 0 ]; then
-#   echo "Sorry. Only the ROOT user can run this program!"
-#   echo "[FAILED]"
-#   exit 0
-# fi
-# echo "[DONE]"
-# echo ""
-
-
-# echo "SSH Policies Hardening..."
-
-# echo " - Backing-up current configuration file."
-# cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
-
-# echo " - Changing value Protocol to 2."
-# if [ $(cat /etc/ssh/sshd_config | grep Protocol | wc -l) -eq 0 ]; then
-#   echo "Protocol 2" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#Protocol [a-zA-Z0-9]*/s/#Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
-#   sed -i -e '1,/Protocol [a-zA-Z0-9]*/s/Protocol [a-zA-Z0-9]*/Protocol 2/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value PermitUserEnvironment to no."
-# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
-#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value PermitEmptyPasswords to No."
-# if [ $(cat /etc/ssh/sshd_config | grep PermitEmptyPasswords | wc -l) -eq 0 ]; then
-#   echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PermitEmptyPasswords [a-zA-Z0-9]*/s/#PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PermitEmptyPasswords [a-zA-Z0-9]*/s/PermitEmptyPasswords [a-zA-Z0-9]*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value MaxAuthTries to 6."
-# if [ $(cat /etc/ssh/sshd_config | grep MaxAuthTries | wc -l) -eq 0 ]; then
-#   echo "MaxAuthTries 6" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#MaxAuthTries [a-zA-Z0-9]*/s/#MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
-#   sed -i -e '1,/MaxAuthTries [a-zA-Z0-9]*/s/MaxAuthTries [a-zA-Z0-9]*/MaxAuthTries 6/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value LoginGraceTime to 2m."
-# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
-#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value ClientAliveInterval to 2m."
-# if [ $(cat /etc/ssh/sshd_config | grep ClientAliveInterval | wc -l) -eq 0 ]; then
-#   echo "ClientAliveInterval 2m" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#ClientAliveInterval [a-zA-Z0-9]*/s/#ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-#   sed -i -e '1,/ClientAliveInterval [a-zA-Z0-9]*/s/ClientAliveInterval [a-zA-Z0-9]*/ClientAliveInterval 2m/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value LogLevel to VERBOSE."
-# if [ $(cat /etc/ssh/sshd_config | grep LogLevel | wc -l) -eq 0 ]; then
-#   echo "LogLevel VERBOSE" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#LogLevel [a-zA-Z0-9]*/s/#LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
-#   sed -i -e '1,/LogLevel [a-zA-Z0-9]*/s/LogLevel [a-zA-Z0-9]*/LogLevel VERBOSE/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value PrintLastLog to yes."
-# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
-#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value AllowTcpForwarding to no."
-# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
-#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value X11Forwarding to no."
-# if [ $(cat /etc/ssh/sshd_config | grep X11Forwarding | wc -l) -eq 0 ]; then
-#   echo "X11Forwarding no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#X11Forwarding [a-zA-Z0-9]*/s/#X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/X11Forwarding [a-zA-Z0-9]*/s/X11Forwarding [a-zA-Z0-9]*/X11Forwarding no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing SSH Daemon Configuraion File Permissions."
-# chmod 600 /etc/ssh/sshd_config
-
-# echo " - Restarting SSH Daemon."
-# systemctl restart sshd
-
-# echo "[DONE]"
-# exit 0
-
-
