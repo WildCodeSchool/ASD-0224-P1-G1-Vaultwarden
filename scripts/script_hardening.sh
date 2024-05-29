@@ -406,6 +406,14 @@ check_selinux
 
 
 harden_sshd_config() {
+
+    $PORT=1754
+    
+    echo "Differents variables choosen :"
+    echo "Port to $PORT" 
+    echo "MaxAuthTries to 5"
+    echo "LogLevel to LogLevel"
+
     # Ensure the script is run as root
     if [[ $EUID -ne 0 ]]; then
         echo "This script must be run as root" 1>&2
@@ -456,6 +464,20 @@ harden_sshd_config() {
         fi
     fi
 
+    # Modify default port (22) to X here 1574
+    if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
+        echo "Port is already set to $PORT."
+    else
+        # Set LogLevel, uncomment if it exists, or add
+        sed -i '/^#Port/ c\Port $PORT' "$SSHD_CONFIG"
+        if ! grep -q "^Port" "$SSHD_CONFIG"; then
+            echo "Port $PORT" >> "$SSHD_CONFIG"
+        fi
+    
+    echo "Port fixed to $PORT"
+    fi
+
+
 }
 
 
@@ -500,7 +522,11 @@ purge_useless_packages
 # PermitTunnel no
 # # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
 # Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
-# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
+# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, 
+# ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. 
+# Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. 
+# Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. 
+# Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
 
 
 # MaxAuthTries
