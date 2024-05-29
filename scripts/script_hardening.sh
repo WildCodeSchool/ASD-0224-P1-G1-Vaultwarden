@@ -433,8 +433,11 @@ harden_sshd_config() {
         # Disable X11 Forwarding in SSH - Set X11Forwarding to no
         sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
 
-        # Check if X11Forwarding line exists and has been changed, if not, add it
-        if ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+        # Check if X11Forwarding is set to yes and change it
+        if grep -q "^X11Forwarding yes" "$SSHD_CONFIG"; then
+            sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
+        elif ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
+            # If no X11Forwarding line, add it
             echo "X11Forwarding no" >> "$SSHD_CONFIG"
         fi
 
@@ -442,6 +445,7 @@ harden_sshd_config() {
 
         echo "X11 forwarding has been disabled."
     fi
+
 
 
     # Check if MaxAuthTries is already set to 5
