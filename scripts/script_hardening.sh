@@ -492,9 +492,16 @@ harden_sshd_config() {
         [GSSAPIAuthentication]="no"
         [AllowAgentForwarding]="no"
         [AllowTcpForwarding]="no"
+        [PermitRootLogin]="no"
+        [Protocol]="2"
+        [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
+        [PermitEmptyPasswords]="no"
         # PermitTunnel no
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
+
+
+
 
     # Loop through each setting and apply changes
     for setting in "${!settings[@]}"; do
