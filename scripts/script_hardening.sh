@@ -14,6 +14,9 @@ endc=$'\e[0m' #endc for end-color
 
 SSHD_CONFIG="/etc/ssh/sshd_config"  
 
+declare -i PORT
+$PORT=1754
+
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -300,6 +303,8 @@ process_accounting() {
 #/etc/init.d/fail2ban restart
 
 
+
+
 disable_compilers() {
     chmod 000 /usr/bin/byacc
     chmod 000 /usr/bin/yacc
@@ -411,7 +416,6 @@ check_selinux
 harden_sshd_config() {
 
     # Path to the SSHD configuration file
-    $PORT=1754
     CINTERVAL="10m"
 
     echo "Differents variables choosen :"
