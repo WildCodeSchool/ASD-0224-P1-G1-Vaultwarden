@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # The administrator has to know the root password and add the execution acl to the script before launching it
+# Variables
 
+install_date="$(date +'%Y_%m_%d' | sed 's/[^[:print:]]//')"
 # Sys and app update 
 echo "System update. Please, enter root password when asked to: "
 sudo apt update && sudo apt upgrade -y  
