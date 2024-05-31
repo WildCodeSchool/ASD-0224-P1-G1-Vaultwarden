@@ -51,3 +51,5 @@ systemctl restart nginx
 systemctl restart apache2
 
 echo "Nginx as a reverse proxy to Apache is now set up."
+
+## test
