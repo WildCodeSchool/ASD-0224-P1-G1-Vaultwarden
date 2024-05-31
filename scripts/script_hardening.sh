@@ -41,20 +41,23 @@ STEP_TEXT=(
 
 # REMOTE_COMMANDS=$(cat <<'EOF'
 
-REMOTE_USER="your_remote_username"
-REMOTE_HOST="your_remote_host"
-REMOTE_PORT="22" # Default SSH port, change if necessary
-SSH_KEY="/path/to/your/private/key"
-EMAIL="your_email@example.com"
+##### Variables that can be modified
 
-read -p "What is your server name ? " SERVER_NAME
+# REMOTE_USER="your_remote_username"
+# REMOTE_HOST="your_remote_host"
+# REMOTE_PORT="22" # Default SSH port, change if necessary
+# SSH_KEY="/path/to/your/private/key"
+# EMAIL="your_email@example.com"
+
+read -p "Enter the name of your remote server: " SERVER_NAME
+read -p "What is the SSH port number on the remote server? " SSH_PORT
+SSH_PRE_PATH="~/.ssh/id_ed25519"
+SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
+
+
 
 # Function to set up SSH key-based authentication using Ed25519
 setup_ssh_ed25519() {
-    local remote_user=$REMOTE_USER
-    local remote_host=$REMOTE_HOST
-    local remote_port=$REMOTE_PORT
-
     if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
         echo "Missing required variables: remote_user, remote_host, or email."
         return 1
@@ -77,9 +80,9 @@ EOF
 
     cd ~/.ssh
     sudo ssh-agent bash
-    ssh-add id_ed25519_$SERVER_NAME
+    ssh-add $SSH_KEY_PATH
 
-    echo "SSH key-based authentication setup using Ed25519 is complete."
+    echo "SSH key-based authentication setup using $SSH_PRE_PATH is complete."
 }
 
 # Call the function to set up SSH key-based authentication
@@ -492,9 +495,13 @@ harden_sshd_config() {
         [MaxSessions]="9"
         [GSSAPIAuthentication]="no"
         [AllowAgentForwarding]="no"
+        # [ForwardAgent]="no"
+        # [HostBasedAuthentification]="no"
+        # [StrictHostKeyChecking]="ask"
         [AllowTcpForwarding]="no"
         [PermitRootLogin]="no"
         [Protocol]="2"
+        [PermitUserEnvironment]="no"
         [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
         [PermitEmptyPasswords]="no"
         # PermitTunnel no
@@ -524,6 +531,7 @@ harden_sshd_config() {
         fi
     done
 
+    # echo "IdentityFile "
 
 #     if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
 #         echo "X11 forwarding is already disabled."
