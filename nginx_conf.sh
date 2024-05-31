@@ -11,6 +11,7 @@ nginx_conf="/etc/nginx/sites-available/default"
 apache_port_conf="/etc/apache2/ports.conf"
 apache_vaultwarden="/etc/apache2/route/vers/vaultwarden"
 domaine="notre.domaine.v6.rocks"  # Replace with our domaine
+dynv6_token="" # Penser a resegner notre token
 
 # Update package lists
 echo "Updating package lists..."
@@ -18,11 +19,16 @@ apt update
 
 # Install Nginx and Apache if not already installed
 echo "Installing Nginx ..."
-apt install -y nginx apache2 apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev
+apt install -y nginx apache2 apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev certbot
 
 # Mise en pause de Nginx et Apache pendant leur configuration
 systemctl stop nginx
 systemctl stop apache2
+
+##################################
+########### Certbot  WIP ##############
+##################################
+certbot certonly --manual --preferred-challenges dns -d "*.$domaine" -d $domaine
 
 # Configure Nginx
 echo "Configuring Nginx as a reverse proxy..."
