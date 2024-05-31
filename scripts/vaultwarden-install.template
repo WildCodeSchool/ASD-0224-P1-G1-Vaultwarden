@@ -33,6 +33,8 @@ snap install rustup --classic
 
 rustup default stable
 
+mkdir data/
+
 cargo run --features sqlite --release
 
 #Build Webservice and extract docker
