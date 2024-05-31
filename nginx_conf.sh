@@ -35,9 +35,6 @@ server {
     
     modsecurity on;
     modsecurity_rules_file /etc/nginx/modsec/main.conf;
-    modsecurity_rules '
-            SecRuleRemoveById 949110
-        ';
 
     location / {
         proxy_pass http://127.0.0.1:8080;
@@ -97,7 +94,9 @@ tar -xzvf v3.2.0.tar.gz
 cd owasp-modsecurity-crs-3.2.0/
 cp crs-setup.conf.example crs-setup.conf
 
-##### choix du site enabled a ajouter ####
+#################################################################
+##### choix du site a surveiller/ liste d esceptions ajouter ####
+#################################################################
 
 # Restart services
 echo "Restarting Nginx and Apache services..."
