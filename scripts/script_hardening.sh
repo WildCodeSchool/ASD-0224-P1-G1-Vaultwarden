@@ -483,11 +483,11 @@ harden_sshd_config() {
         [LoginGraceTime]="20"
         [MaxSessions]="9"
         [GSSAPIAuthentication]="no"
-        [AllowAgentForwarding]="no"
-        # [ForwardAgent]="no"
+        [AllowAgentForwarding]="yes"
+        [ForwardAgent]="yes"
         # [HostBasedAuthentification]="no"
         # [StrictHostKeyChecking]="ask"
-        [AllowTcpForwarding]="no"
+        [AllowTcpForwarding]="yes"
         [PermitRootLogin]="no"
         [Protocol]="2"
         [PermitUserEnvironment]="no"
@@ -520,9 +520,6 @@ harden_sshd_config() {
             echo "$setting set to $value."
         fi
     done
-
-
-
 
     # Loop through each setting and apply changes
     for setting in "${!settings_ssh_daemon[@]}"; do
