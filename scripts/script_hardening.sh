@@ -154,8 +154,7 @@ sys_upgrades() {
 
 unattended_upg() {
     # IMPORTANT - Unattended upgrades may cause issues
-    # But it is known that the benefits are far more than
-    # downsides
+    # But it is known that the benefits are far more than downsides
     apt-get --yes --force-yes install unattended-upgrades
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
@@ -357,9 +356,6 @@ process_accounting() {
 #### Adapt  [ssh-ddos] part to "enabled = true"
 #/etc/init.d/fail2ban restart
 
-
-
-
 disable_compilers() {
     chmod 000 /usr/bin/byacc
     chmod 000 /usr/bin/yacc
@@ -416,7 +412,6 @@ purge_useless_packages() {
     done
 }
 
-
 # AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles.
 # Check if apparmor is installed command is available
 check_apparmor() {
@@ -450,7 +445,6 @@ check_selinux() {
 check_apparmor
 check_selinux
 
-
 # Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
 # Paramètre	Valeur recommandée
 # Protocol	2
@@ -467,10 +461,7 @@ check_selinux
 # ClientAliveCountMax	2
 # LoginGraceTime	300
 
-
 harden_sshd_config() {
-
-    # Path to the SSHD configuration file
     CINTERVAL="10m"
 
     echo "Differents variables choosen :"
@@ -508,9 +499,6 @@ harden_sshd_config() {
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
-
-
-
     # Loop through each setting and apply changes
     for setting in "${!settings[@]}"; do
         value="${settings[$setting]}"
@@ -530,6 +518,306 @@ harden_sshd_config() {
             echo "$setting set to $value."
         fi
     done
+}
+
+# UPnP (Universal Plug and Play)
+kerberos_setup_sshd() {
+    # Prompt the user to confirm UPnP deactivation
+   echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
+   read -p "Do you use Kerberos ? (y/n): " kerberos_response
+
+    kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
+
+    if [[ "$kerberos_response" == "y" ]]; then
+        echo "Disabling Kerberos Authentification in sshd_config..."
+
+    if grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
+        echo "KerberosOrLocalPassword is already set to NO."
+    else
+        # Replace or uncomment DebianBanner setting
+        sed -i '/^#*KerberosAuthentication /c\KerberosAuthentication no' "$SSHD_CONFIG"
+        if ! grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
+            echo "KerberosAuthentication no" >> "$SSHD_CONFIG"
+        fi
+        echo "KerberosAuthentication set to no"
+    fi
+
+    if grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
+        echo "KerberosOrLocalPassword is already set to NO."
+    else
+        # Replace or uncomment DebianBanner setting
+        sed -i '/^#*KerberosOrLocalPassword /c\KerberosOrLocalPassword no' "$SSHD_CONFIG"
+        if ! grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
+            echo "KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
+        fi
+        echo "KerberosOrLocalPassword set to no"
+    fi
+
+    elif [[ "$kerberos_response" == "n" ]]; then
+        echo "Kerberos authentification has not been disabled."
+    else
+        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+    fi
+}
+
+# UPnP (Universal Plug and Play)
+upnp_desactivation() {
+    # Prompt the user to confirm UPnP deactivation
+   echo "Universal Plug and Play (UPnP) allows network devices like media servers and routers to discover each other."
+   echo "Disabling UPnP might impact services like media centers (e.g., Plex) or network devices (e.g., some WiFi routers)."
+   read -p "Do you wish to disable UPnP? (y/n): " upnp_response
+
+    # Convert response to lowercase to simplify the conditional check
+    upnp_response="${upnp_response,,}"  # ,, converts to lowercase
+
+    # Check user input and apply the firewall rule if confirmed
+    if [[ "$upnp_response" == "y" ]]; then
+        echo "Disabling UPnP..."
+        ufw deny proto udp from any to any port 1900
+        echo "UPnP has been disabled."
+    elif [[ "$upnp_response" == "n" ]]; then
+        echo "UPnP has not been disabled."
+    else
+        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+    fi
+}
+
+
+main() {
+    sys_upgrades
+    unattended_upg
+    disable_root
+    purge_telnet
+    purge_nfs
+    purge_whoopsie
+    set_chkrootkit
+    harden_ssh_brute
+    harden_ssh
+    logwatch_reporter
+    process_accounting
+    purge_atd
+    disable_avahi
+    disable_cups
+    disable_compilers
+    firewall_setup
+    harden_sshd_config
+    upnp_desactivation
+    setup_ssh_ed25519
+    # kernel_tuning
+
+    # Created by me, need to verify if to preserver or not
+    slap_disable
+    nfs_disable
+}
+
+main "$@"
+
+purge_useless_packages
+
+
+
+
+
+# EOF
+# )
+# # Execute the commands on the remote server
+# ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST "$REMOTE_COMMANDS"
+
+
+##### Add later with adaptation the code below,  
+
+
+# https://ittavern.com/ssh-server-hardening/
+
+# Disable tunneling and port forwarding #
+# AllowAgentForwarding no
+# AllowTcpForwarding no
+# PermitTunnel no
+
+# Disabling those functions makes it more difficult to use the server as a jump host to gain access to the connected networks, malicious or not. Most servers do not need those functions enabled, but to learn more, feel free to check my article about SSH tunneling and port forwarding.
+
+# Disable unused authentification methods #
+# KerberosAuthentication no
+# GSSAPIAuthentication no
+# ChallengeResponseAuthentication
+# It highly depends on your needs, but if an authentification method is unused, it should be disabled as it increases the attack surface to exploits and vulnerabilities.
+# Side note: Please ensure you don't disable the only method you can log in to prevent a lockout. 
+
+# PermitTunnel no
+# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
+# Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
+# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, 
+# ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. 
+# Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. 
+# Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. 
+# Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
+
+# MaxAuthTries
+# # Signification : Définit le nombre maximum de tentatives d'authentification autorisées par connexion.
+# # Configuration recommandée : Un nombre réduit de tentatives, comme MaxAuthTries 3, aide à prévenir les attaques par force brute.
+
+# ClientAliveInterval et ClientAliveCountMax
+# Usage : Ces paramètres aident à détecter les connexions SSH inactives et à les fermer.
+# Configuration recommandée : ClientAliveInterval 0 et ClientAliveCountMax 2. Cela ferme la connexion si le client reste inactif pendant 15 minutes.
+
+
+# AllowUsers et AllowGroups
+# Usage : Restreint l'accès SSH à certains utilisateurs ou groupes.
+# Configuration recommandée : Utilisez AllowUsers user1 user2 et/ou AllowGroups group1 group2 pour limiter l'accès aux utilisateurs ou groupes spécifiés.
+
+# UsePAM
+# Signification : Active ou désactive l'utilisation des Pluggable Authentication Modules (PAM).
+# Configuration recommandée : La configuration de UsePAM yes peut être appropriée pour des environnements où les fonctionnalités spécifiques de PAM sont souhaitées.
+
+# DenyUsers et DenyGroups
+# Usage : Spécifie les utilisateurs et groupes qui sont explicitement interdits de se connecter via SSH.
+# Configuration recommandée : DenyUsers user3 user4 et/ou DenyGroups group3 group4 pour bloquer l'accès à des utilisateurs ou groupes spécifiques.
+
+# Récapitulatif des valeurs recommandées
+
+# #!/bin/bash
+# # Script to harden ssh on ubuntu/debian server
+# # follow on my blog http://www.coderew.com/hardening_ssh_on_remote_ubuntu_debian_server/ 
+# # checkout the repo for more scripts https://github.com/nvnmo/handy-scripts
+
+# read -p "Enter your server IP:" serverIP # prompt for server IP
+# read -p "Enter your username(requires root privileges):" username # prompt for username
+# printf "\nChanging the default SSH port is one of the easiest\n things you can do to help harden you servers security. \nIt will protect you from robots that are programmed \nto scan for port 22 openings, and commence \ntheir attack."
+# printf "\n"
+# read -p "Do you want to change default SSH port?[Y/n]" -n 1 portChange
+# printf "\n"
+# portNum=0
+# if [[ $portChange =~ ^[Yy]$ ]];then
+#   printf "Choose an available port.The port number does not \nreally matter as long as you do no choose something that \nis already in use and falls within the \nport number range."
+#   printf "\n"
+#   read -p "Port Number:" portNum # a port num to change
+#   printf "\n"
+# fi
+# printf "\n"
+# read -p "Do you want to disable root login?[Y/n]" -n 1 rootLogin;printf "\n"
+# read -p "Do you want to change protocol version to 2?[Y/n]" -n 1 protocolChange;printf "\n"
+# read -p "Do you want to enable privilege seperation?[Y/n]" -n 1 privilegeSep;printf "\n"
+# read -p "Do you want to disable empty passwords?[Y/n]" -n 1 emptyPass;printf "\n"
+# read -p "Do you want to disable X11 forwarding?[Y/n]" -n 1 x11Forwarding;printf "\n"
+# read -p "Do you want to enable TCPKeepAlive to avoid zombies?[Y/n]" -n 1 zombies;printf "\n"
+
+# echo "cat /etc/ssh/sshd_config > /etc/ssh/sshd_config.bak" > .local_script_$0
+
+# if [[ $portChange =~ ^[Yy]$ ]];then
+#   echo "sed \"s/.*Port.*/Port $portNum/\" /etc/ssh/sshd_config > temp" >> .local_script_$0
+#   echo "cp temp /etc/ssh/sshd_config" >> .local_script_$0
+# fi
+# if [[ $rootLogin =~ ^[Yy]$ ]];then
+#   echo "sed '0,/^.*PermitRootLogin.*$/s//PermitRootLogin no/' /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+# if [[ $protocolChange =~ ^[Yy]$ ]];then
+#   echo "sed -i \"s/^.*Protocol.*$/Protocol 2/\" /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+# if [[ $privilegeSep =~ ^[Yy]$ ]];then
+#   echo "sed -i \"s/^.*UsePrivilegeSeparation.*$/UsePrivilegeSeparation yes/\" /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+# if [[ $emptyPass =~ ^[Yy]$ ]];then
+#   echo "sed -i \"s/^.*PermitEmptyPasswords.*$/PermitEmptyPasswords no/\" /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+# if [[ $x11Forwarding =~ ^[Yy]$ ]];then
+#   echo "sed -i \"s/^.*X11Forwarding.*$/X11Forwarding no/\" /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+# if [[ $zombies =~ ^[Yy]$ ]];then
+#   echo "sed -i \"s/^.*TCPKeepAlive.*$/TCPKeepAlive yes/\" /etc/ssh/sshd_config" >> .local_script_$0
+
+# fi
+
+# MYSCRIPT=`base64 -w0 .local_script_$0`
+# ssh -t $username@$serverIP "echo $MYSCRIPT | base64 -d | sudo bash"
+# rm .local_script_$0
+# echo "Success"
+# exit
+
+#  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
+
+# echo " - Changing value PermitUserEnvironment to no."
+# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
+#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
+# fi
+
+
+
+# echo " - Changing value LoginGraceTime to 2m."
+# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
+#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
+# fi
+
+
+# echo " - Changing value PrintLastLog to yes."
+# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
+#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing value AllowTcpForwarding to no."
+# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
+#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
+# else
+#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
+# fi
+
+# echo " - Changing SSH Daemon Configuraion File Permissions."
+# chmod 600 /etc/ssh/sshd_config
+
+# echo " - Restarting SSH Daemon."
+# systemctl restart sshd
+
+# echo "[DONE]"
+# exit 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # echo "IdentityFile "
 
@@ -630,282 +918,3 @@ harden_sshd_config() {
 #         fi
 #         echo "ClientAliveInterval set to $CINTERVAL."
 #     fi
-
-
-}
-
-# UPnP (Universal Plug and Play)
-kerberos_setup_sshd() {
-    # Prompt the user to confirm UPnP deactivation
-   echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
-   read -p "Do you use Kerberos ? (y/n): " kerberos_response
-
-    kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
-
-    if [[ "$kerberos_response" == "y" ]]; then
-        echo "Disabling Kerberos Authentification in sshd_config..."
-
-    if grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
-        echo "KerberosOrLocalPassword is already set to NO."
-    else
-        # Replace or uncomment DebianBanner setting
-        sed -i '/^#*KerberosAuthentication /c\KerberosAuthentication no' "$SSHD_CONFIG"
-        if ! grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
-            echo "KerberosAuthentication no" >> "$SSHD_CONFIG"
-        fi
-        echo "KerberosAuthentication set to no"
-    fi
-
-    if grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
-        echo "KerberosOrLocalPassword is already set to NO."
-    else
-        # Replace or uncomment DebianBanner setting
-        sed -i '/^#*KerberosOrLocalPassword /c\KerberosOrLocalPassword no' "$SSHD_CONFIG"
-        if ! grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
-            echo "KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
-        fi
-        echo "KerberosOrLocalPassword set to no"
-    fi
-
-
-
-
-    elif [[ "$kerberos_response" == "n" ]]; then
-        echo "Kerberos authentification has not been disabled."
-    else
-        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
-    fi
-}
-
-
-
-# UPnP (Universal Plug and Play)
-upnp_desactivation() {
-    # Prompt the user to confirm UPnP deactivation
-   echo "Universal Plug and Play (UPnP) allows network devices like media servers and routers to discover each other."
-   echo "Disabling UPnP might impact services like media centers (e.g., Plex) or network devices (e.g., some WiFi routers)."
-   read -p "Do you wish to disable UPnP? (y/n): " upnp_response
-
-    # Convert response to lowercase to simplify the conditional check
-    upnp_response="${upnp_response,,}"  # ,, converts to lowercase
-
-    # Check user input and apply the firewall rule if confirmed
-    if [[ "$upnp_response" == "y" ]]; then
-        echo "Disabling UPnP..."
-        ufw deny proto udp from any to any port 1900
-        echo "UPnP has been disabled."
-    elif [[ "$upnp_response" == "n" ]]; then
-        echo "UPnP has not been disabled."
-    else
-        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
-    fi
-}
-
-
-main() {
-    sys_upgrades
-    unattended_upg
-    disable_root
-    purge_telnet
-    purge_nfs
-    purge_whoopsie
-    set_chkrootkit
-    harden_ssh_brute
-    harden_ssh
-    logwatch_reporter
-    process_accounting
-    purge_atd
-    disable_avahi
-    disable_cups
-    disable_compilers
-    firewall_setup
-    harden_sshd_config
-    upnp_desactivation
-    setup_ssh_ed25519
-    # kernel_tuning
-
-    # Created by me, need to verify if to preserver or not
-    slap_disable
-    nfs_disable
-}
-
-main "$@"
-
-purge_useless_packages
-
-
-
-# EOF
-# )
-# # Execute the commands on the remote server
-# ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST "$REMOTE_COMMANDS"
-
-
-##### Add later with adaptation the code below,  
-
-
-# https://ittavern.com/ssh-server-hardening/
-
-# Disable tunneling and port forwarding #
-# AllowAgentForwarding no
-# AllowTcpForwarding no
-# PermitTunnel no
-
-# Disabling those functions makes it more difficult to use the server as a jump host to gain access to the connected networks, malicious or not. Most servers do not need those functions enabled, but to learn more, feel free to check my article about SSH tunneling and port forwarding.
-
-# Disable unused authentification methods #
-# KerberosAuthentication no
-# GSSAPIAuthentication no
-# ChallengeResponseAuthentication
-# It highly depends on your needs, but if an authentification method is unused, it should be disabled as it increases the attack surface to exploits and vulnerabilities.
-# Side note: Please ensure you don't disable the only method you can log in to prevent a lockout. 
-
-
-# PermitTunnel no
-# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
-# Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
-# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, 
-# ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. 
-# Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. 
-# Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. 
-# Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
-
-
-# MaxAuthTries
-# # Signification : Définit le nombre maximum de tentatives d'authentification autorisées par connexion.
-# # Configuration recommandée : Un nombre réduit de tentatives, comme MaxAuthTries 3, aide à prévenir les attaques par force brute.
-
-# ClientAliveInterval et ClientAliveCountMax
-# Usage : Ces paramètres aident à détecter les connexions SSH inactives et à les fermer.
-# Configuration recommandée : ClientAliveInterval 0 et ClientAliveCountMax 2. Cela ferme la connexion si le client reste inactif pendant 15 minutes.
-
-
-# AllowUsers et AllowGroups
-# Usage : Restreint l'accès SSH à certains utilisateurs ou groupes.
-# Configuration recommandée : Utilisez AllowUsers user1 user2 et/ou AllowGroups group1 group2 pour limiter l'accès aux utilisateurs ou groupes spécifiés.
-
-# UsePAM
-# Signification : Active ou désactive l'utilisation des Pluggable Authentication Modules (PAM).
-# Configuration recommandée : La configuration de UsePAM yes peut être appropriée pour des environnements où les fonctionnalités spécifiques de PAM sont souhaitées.
-
-# DenyUsers et DenyGroups
-# Usage : Spécifie les utilisateurs et groupes qui sont explicitement interdits de se connecter via SSH.
-# Configuration recommandée : DenyUsers user3 user4 et/ou DenyGroups group3 group4 pour bloquer l'accès à des utilisateurs ou groupes spécifiques.
-
-# Récapitulatif des valeurs recommandées
-
-
-
-# #!/bin/bash
-# # Script to harden ssh on ubuntu/debian server
-# # follow on my blog http://www.coderew.com/hardening_ssh_on_remote_ubuntu_debian_server/ 
-# # checkout the repo for more scripts https://github.com/nvnmo/handy-scripts
-
-# read -p "Enter your server IP:" serverIP # prompt for server IP
-# read -p "Enter your username(requires root privileges):" username # prompt for username
-# printf "\nChanging the default SSH port is one of the easiest\n things you can do to help harden you servers security. \nIt will protect you from robots that are programmed \nto scan for port 22 openings, and commence \ntheir attack."
-# printf "\n"
-# read -p "Do you want to change default SSH port?[Y/n]" -n 1 portChange
-# printf "\n"
-# portNum=0
-# if [[ $portChange =~ ^[Yy]$ ]];then
-#   printf "Choose an available port.The port number does not \nreally matter as long as you do no choose something that \nis already in use and falls within the \nport number range."
-#   printf "\n"
-#   read -p "Port Number:" portNum # a port num to change
-#   printf "\n"
-# fi
-# printf "\n"
-# read -p "Do you want to disable root login?[Y/n]" -n 1 rootLogin;printf "\n"
-# read -p "Do you want to change protocol version to 2?[Y/n]" -n 1 protocolChange;printf "\n"
-# read -p "Do you want to enable privilege seperation?[Y/n]" -n 1 privilegeSep;printf "\n"
-# read -p "Do you want to disable empty passwords?[Y/n]" -n 1 emptyPass;printf "\n"
-# read -p "Do you want to disable X11 forwarding?[Y/n]" -n 1 x11Forwarding;printf "\n"
-# read -p "Do you want to enable TCPKeepAlive to avoid zombies?[Y/n]" -n 1 zombies;printf "\n"
-
-
-# echo "cat /etc/ssh/sshd_config > /etc/ssh/sshd_config.bak" > .local_script_$0
-
-# if [[ $portChange =~ ^[Yy]$ ]];then
-#   echo "sed \"s/.*Port.*/Port $portNum/\" /etc/ssh/sshd_config > temp" >> .local_script_$0
-#   echo "cp temp /etc/ssh/sshd_config" >> .local_script_$0
-# fi
-# if [[ $rootLogin =~ ^[Yy]$ ]];then
-#   echo "sed '0,/^.*PermitRootLogin.*$/s//PermitRootLogin no/' /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $protocolChange =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*Protocol.*$/Protocol 2/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $privilegeSep =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*UsePrivilegeSeparation.*$/UsePrivilegeSeparation yes/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $emptyPass =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*PermitEmptyPasswords.*$/PermitEmptyPasswords no/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $x11Forwarding =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*X11Forwarding.*$/X11Forwarding no/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $zombies =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*TCPKeepAlive.*$/TCPKeepAlive yes/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-
-# MYSCRIPT=`base64 -w0 .local_script_$0`
-# ssh -t $username@$serverIP "echo $MYSCRIPT | base64 -d | sudo bash"
-# rm .local_script_$0
-# echo "Success"
-# exit
-
-
-
-
-
-#  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
-
-# echo " - Changing value PermitUserEnvironment to no."
-# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
-#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-# fi
-
-
-
-# echo " - Changing value LoginGraceTime to 2m."
-# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
-#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-# fi
-
-
-# echo " - Changing value PrintLastLog to yes."
-# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
-#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value AllowTcpForwarding to no."
-# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
-#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing SSH Daemon Configuraion File Permissions."
-# chmod 600 /etc/ssh/sshd_config
-
-# echo " - Restarting SSH Daemon."
-# systemctl restart sshd
-
-# echo "[DONE]"
-# exit 0
