@@ -30,7 +30,7 @@ apt update
 # Install Nginx and Apache if not already installed
 echo "Installing Nginx ..."
 apt install -y nginx apache2 apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev certbot
-echo -e "Installation des packages pour Nginx Apache et Modprobe realisee" >> $dir
+echo -e "Installation des packages pour Nginx Apache et Modprobe realisee.\n" >> $dir
 
 # Mise en pause de Nginx et Apache pendant leur configuration / Stop Nginx and Apache2 before installing and setting up the config for modsecurity
 systemctl stop nginx
@@ -40,7 +40,7 @@ systemctl stop apache2
 ########### Certbot  WIP ##############
 ##################################
 certbot certonly --manual --preferred-challenges dns -d "*.$domaine" -d $domaine
-echo -e "Certificat recupere" >> $dir
+echo -e "Certificat recupere.\n" >> $dir
 
 # Configure Nginx
 echo "Configuring Nginx as a reverse proxy..."
@@ -63,7 +63,7 @@ server {
     }
 }
 EOF
-echo -e "Parametrage Nginx reverse proxy et preparation Modprobe" >> $dir
+echo -e "Parametrage Nginx reverse proxy et preparation Modprobe.\n" >> $dir
 
 # Configure Apache to listen on port 8080
 echo "Configuring Apache to listen on port 8080..."
@@ -72,7 +72,7 @@ sed -i 's/Listen 80/Listen 8080/' "$apache_port_conf"
 # Update Apache Virtual Host to use port 8080
 echo "Updating Apache Virtual Host configuration..."
 sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/' "$apache_vaultwarden"
-echo -e "Configuration de Apache OK" >> $dir
+echo -e "Configuration de Apache OK.\n" >> $dir
 
 # Recuperation et installation de ModSecurity
 git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/local/src
@@ -93,7 +93,7 @@ cd nginx-$nginx_vers/
 ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
 make modules
 cp /usr/local/src/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules/
-echo -e "Recuperation et compilation de Modprobe OK" >> $dir
+echo -e "Recuperation et compilation de Modprobe OK.\n" >> $dir
 
 # Ajout du load module a la conf Nginx
 sed -i '/include \/etc\/nginx\/modules-enabled\/\*\.conf;/a load_module \/etc\/nginx\/modules\/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf
@@ -114,7 +114,7 @@ wget https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/refs/tags/v3.2.
 tar -xzvf v3.2.0.tar.gz
 cd owasp-modsecurity-crs-3.2.0/
 cp crs-setup.conf.example crs-setup.conf
-echo -e "Application des regles de securite de base OWASP" >> $dir
+echo -e "Application des regles de securite de base OWASP.\n" >> $dir
 
 #################################################################
 ##### choix du site a surveiller/ liste d esceptions ajouter ####
