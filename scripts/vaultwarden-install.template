@@ -20,4 +20,8 @@ rustup default stable
 
 mkdir data/
 
-cargo run --features sqlite --release
+echo ""
+echo "Installation Complete"
+echo ""
+echo "To start the VaultWarden service, run:"
+echo "cargo run --features sqlite --release"
