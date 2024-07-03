@@ -74,14 +74,16 @@ make
 make install
 
 # Module ModSecurity pour Nginx
-git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src
-nginx_vers=$(nginx -v 2>&1 | awk -F'/' '{print $2}')
+rm -rf /usr/local/src/ModSecurity-nginx
+git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src/ModSecurity-nginx
+cd /usr/local/src/ModSecurity-nginx
+nginx_vers=$(nginx -v 2>&1 | awk -F'/' '{print $2}' | awk -F' ' '{print $1}')
 wget http://nginx.org/download/nginx-$nginx_vers.tar.gz
 tar zxvf nginx-$nginx_vers.tar.gz
 cd nginx-$nginx_vers/
 ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
 make modules
-cp /usr/local/src/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules/
+cp /usr/local/src/ModSecurity-nginx/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules/
 echo -e "$install_date - Recuperation et compilation de Modprobe OK.\n" >> $dir
 
 # Ajout du load module a la conf Nginx
