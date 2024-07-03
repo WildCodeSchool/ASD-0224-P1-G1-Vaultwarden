@@ -1,4 +1,10 @@
 #!/bin/bash
+#-------------------------------
+# TODO
+# ------------------------------
+# apt-get install -qq -o=Dpkg::Use-Pty=0 <packages>
+# Use the above command to make the packages install silent
+
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
@@ -20,7 +26,7 @@ apt update
 echo "Installing Nginx ..."
 apt install -y nginx apache2 apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev
 
-# Mise en pause de Nginx et Apache pendant leur configuration
+# Mise en pause de Nginx et Apache pendant leur configuration / Stop Nginx and Apache2 before installing and setting up the config for modsecurity
 systemctl stop nginx
 systemctl stop apache2
 
@@ -98,7 +104,7 @@ cp crs-setup.conf.example crs-setup.conf
 ##### choix du site a surveiller/ liste d esceptions ajouter ####
 #################################################################
 
-# Restart services
+# Restart services and enable Nginx and Apache2
 echo "Restarting Nginx and Apache services..."
 systemctl enable nginx
 systemctl enable apache2
