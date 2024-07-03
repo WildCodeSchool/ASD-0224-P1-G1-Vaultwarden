@@ -510,12 +510,12 @@ harden_sshd_config() {
 
         # Authentication:
 
-        #LoginGraceTime 2m
+        [LoginGraceTime]="2m"
         [PermitRootLogin]="prohibit-password"
         #StrictModes yes
         [MaxAuthTries]="4"
         [MaxSessions]="6"
-        #PubkeyAuthentication yes
+        [PubkeyAuthentication]="yes"
 
         # Expect .ssh/authorized_keys2 to be disregarded by default in future.
         #AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
@@ -534,18 +534,13 @@ harden_sshd_config() {
         #IgnoreRhosts yes
 
         # To disable tunneled clear text passwords, change to no here!
-        #PasswordAuthentication yes
-        #PermitEmptyPasswords no
+        [PasswordAuthentication]="yes"
+        [PermitEmptyPasswords]="no"
 
         # Change to yes to enable challenge-response passwords (beware issues with
         # some PAM modules and threads)
         [ChallengeResponseAuthentication]="no"
 
-        # Kerberos options
-        #KerberosAuthentication no
-        #KerberosOrLocalPasswd yes
-        #KerberosTicketCleanup yes
-        #KerberosGetAFSToken no
 
         # GSSAPI options
         #GSSAPIAuthentication no
@@ -562,16 +557,16 @@ harden_sshd_config() {
         # If you just want the PAM account and session checks to run without
         # PAM authentication, then enable this but set PasswordAuthentication
         # and ChallengeResponseAuthentication to 'no'.
-        UsePAM yes
+        [UsePAM]="no"
 
         #AllowAgentForwarding yes
         #AllowTcpForwarding yes
         #GatewayPorts no
-        X11Forwarding yes
+        [X11Forwarding]="no"
         #X11DisplayOffset 10
-        #X11UseLocalhost yes
+        X11UseLocalhost="no"
         #PermitTTY yes
-        PrintMotd no
+        [PrintMotd]="no"
         #PrintLastLog yes
         #TCPKeepAlive yes
         #PermitUserEnvironment no
@@ -589,10 +584,10 @@ harden_sshd_config() {
         #Banner none
 
         # Allow client to pass locale environment variables
-        AcceptEnv LANG LC_*
+        [AcceptEnv]="LANG LC_*"
 
         # override default of no subsystems
-        Subsystem	sftp	/usr/lib/openssh/sftp-server
+        [Subsystem]="sftp	/usr/lib/openssh/sftp-server"
 
         # Example of overriding settings on a per-user basis
         #Match User anoncvs
@@ -601,12 +596,8 @@ harden_sshd_config() {
         #	PermitTTY no
         #	ForceCommand cvs server
 
-
         [DebianBanner]="no"
         [ClientAliveInterval]="10m"  # Adjust this to your desired interval
-        [X11Forwarding]="no"
-        [Port]="$PORT"
-        [LoginGraceTime]="20"
         
         [GSSAPIAuthentication]="no"
         [AllowAgentForwarding]="yes"
@@ -677,6 +668,9 @@ kerberos_setup_sshd() {
 
     kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
 
+    echo "KerberosTicketCleanup no" >> "$SSHD_CONFIG"
+    echo "KerberosGetAFSToken no" >>"$SSHD_CONFIG"
+
     if [[ "$kerberos_response" == "y" ]]; then
         echo "Disabling Kerberos Authentification in sshd_config..."
 
@@ -701,12 +695,17 @@ kerberos_setup_sshd() {
         fi
         echo "KerberosOrLocalPassword set to no"
     fi
+    
 
     elif [[ "$kerberos_response" == "n" ]]; then
         echo "Kerberos authentification has not been disabled."
     else
         echo "Invalid input. Please enter 'y' for yes or 'n' for no."
     fi
+
+
+
+
 }
 
 # UPnP (Universal Plug and Play)
@@ -926,138 +925,3 @@ purge_useless_packages
 
 # echo "[DONE]"
 # exit 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # echo "IdentityFile "
-
-#     if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-#         echo "X11 forwarding is already disabled."
-#     else
-#         # Backup the original config file
-#         cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
-
-#         # Disable X11 Forwarding in SSH - Set X11Forwarding to no
-#         sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-
-#         # Check if X11Forwarding is set to yes and change it
-#         if grep -q "^X11Forwarding yes" "$SSHD_CONFIG"; then
-#             sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-#         elif ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-#             # If no X11Forwarding line, add it
-#             echo "X11Forwarding no" >> "$SSHD_CONFIG"
-#         fi
-
-#         systemctl restart sshd
-
-#         echo "X11 forwarding has been disabled."
-#     fi
-
-
-
-#     # Check if MaxAuthTries is already set to 5
-#     if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
-#         echo "MaxAuthTries is already set to 5."
-#     else
-#         # Attempt to replace any existing MaxAuthTries line
-#         if grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
-#             # Replace any existing value, regardless of being commented out or not
-#             sed -i 's/^#*\s*MaxAuthTries.*/MaxAuthTries 5/' "$SSHD_CONFIG"
-#             echo "MaxAuthTries set to 5."
-#         else
-#             # If no MaxAuthTries line exists, add it
-#             echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
-#             echo "MaxAuthTries added with value 5."
-#         fi
-#     fi
-
-    
-
-
-#     # Set LogLevel to VERBOSE
-#     if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
-#         echo "LogLevel is already set to VERBOSE."
-#     else
-#         # First, try to replace an existing LogLevel line, whether commented or not
-#         if grep -q "^LogLevel" "$SSHD_CONFIG"; then
-#             sed -i "s/^LogLevel .*/LogLevel VERBOSE/" "$SSHD_CONFIG"
-#             echo "LogLevel set to VERBOSE."
-#         else
-#             # If no LogLevel line exists, add it
-#             echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
-#             echo "LogLevel added as VERBOSE."
-#         fi
-#     fi
-
-#     # Modify default port (22) to X here 1574
-#     if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
-#         echo "Port is already set to $PORT."
-#     else
-# =
-#         sed -i "/^#Port/ c\Port $PORT" "$SSHD_CONFIG"
-#         sed -i "/^Port [0-9]*/c\Port $PORT" "$SSHD_CONFIG"
-
-#         if ! grep -q "^Port" "$SSHD_CONFIG"; then
-#             echo "Port $PORT" >> "$SSHD_CONFIG"
-#         fi
-    
-#         echo "Port fixed to $PORT"
-#     fi
-
-
-#     # Set DebianBanner
-#     if grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
-#         echo "DebianBanner is already set to NO."
-#     else
-#         # Replace or uncomment DebianBanner setting
-#         sed -i '/^#*DebianBanner /c\DebianBanner no' "$SSHD_CONFIG"
-#         if ! grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
-#             echo "DebianBanner no" >> "$SSHD_CONFIG"
-#         fi
-#         echo "Debian banner set to no"
-#     fi
-
-#     # Set ClientAliveInterval
-#     if grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
-#         echo "ClientAliveInterval is already set to $CINTERVAL."
-#     else
-#         # Replace or uncomment ClientAliveInterval setting
-#         sed -i "/^#*ClientAliveInterval /c\ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"
-#         if ! grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
-#             echo "ClientAliveInterval $CINTERVAL" >> "$SSHD_CONFIG"
-#         fi
-#         echo "ClientAliveInterval set to $CINTERVAL."
-#     fi
