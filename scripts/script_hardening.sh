@@ -22,7 +22,8 @@ SSH_CONFIG="/etc/ssh/ssh_config"
 SSHD_CONFIG="/etc/ssh/sshd_config"  
 
 declare -i PORT
-$PORT=1754
+PORT=1754
+
 read -p "Enter the name of your remote server: " SERVER_NAME
 read -p "What is the SSH port number on the remote server? " SSH_PORT
 
@@ -188,10 +189,7 @@ purge_whoopsie() { # disable telemetry - less layers to add more security     # 
     apt-get --yes purge whoopsie
 }
 
-set_chkrootkit() {
-    apt-get --yes install chkrootkit
-    chkrootkit
-}
+
 
 ### Verify if using ssh or openssh
 harden_ssh_brute() {
@@ -745,6 +743,13 @@ main() {
 main "$@"
 
 purge_useless_packages
+
+
+set_chkrootkit() {
+    apt-get --yes install chkrootkit
+    chkrootkit
+}
+
 
 # EOF
 # )
