@@ -18,11 +18,12 @@ REMOTE_HOST="your_remote_host"
 REMOTE_PORT="22" # Default SSH port, change if necessary
 SSH_KEY="/path/to/your/private/key"
 
+SSH_CONFIG="/etc/ssh/ssh_config"  
 SSHD_CONFIG="/etc/ssh/sshd_config"  
+declare -i PORT=1754
 
-declare -i PORT
-$PORT=1754
-
+read -p "Enter the name of your remote server: " SERVER_NAME
+read -p "What is the SSH port number on the remote server? " SSH_PORT
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -49,12 +50,8 @@ STEP_TEXT=(
 # SSH_KEY="/path/to/your/private/key"
 # EMAIL="your_email@example.com"
 
-read -p "Enter the name of your remote server: " SERVER_NAME
-read -p "What is the SSH port number on the remote server? " SSH_PORT
 SSH_PRE_PATH="~/.ssh/id_ed25519"
 SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
-
-
 
 # Function to set up SSH key-based authentication using Ed25519
 setup_ssh_ed25519() {
@@ -154,8 +151,7 @@ sys_upgrades() {
 
 unattended_upg() {
     # IMPORTANT - Unattended upgrades may cause issues
-    # But it is known that the benefits are far more than
-    # downsides
+    # But it is known that the benefits are far more than downsides
     apt-get --yes --force-yes install unattended-upgrades
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
@@ -189,11 +185,6 @@ purge_nfs() {
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
-}
-
-set_chkrootkit() {
-    apt-get --yes install chkrootkit
-    chkrootkit
 }
 
 ### Verify if using ssh or openssh
@@ -357,9 +348,6 @@ process_accounting() {
 #### Adapt  [ssh-ddos] part to "enabled = true"
 #/etc/init.d/fail2ban restart
 
-
-
-
 disable_compilers() {
     chmod 000 /usr/bin/byacc
     chmod 000 /usr/bin/yacc
@@ -416,7 +404,6 @@ purge_useless_packages() {
     done
 }
 
-
 # AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles.
 # Check if apparmor is installed command is available
 check_apparmor() {
@@ -450,27 +437,7 @@ check_selinux() {
 check_apparmor
 check_selinux
 
-
-# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
-# Paramètre	Valeur recommandée
-# Protocol	2
-# LogLevel	VERBOSE
-# PermitRootLogin	no
-# PasswordAuthentication	no
-# ChallengeResponseAuthentication	no
-# AllowAgentForwarding	no
-# PermitTunnel	no
-# X11Forwarding	no
-# MaxAuthTries	3
-# UsePAM	yes
-# ClientAliveInterval	0
-# ClientAliveCountMax	2
-# LoginGraceTime	300
-
-
 harden_sshd_config() {
-
-    # Path to the SSHD configuration file
     CINTERVAL="10m"
 
     echo "Differents variables choosen :"
@@ -484,163 +451,202 @@ harden_sshd_config() {
         exit 1
     fi
 
-    settings=(
+    settings_ssh=(
+        [ForwardAgent]="yes"
+        [ForwardX11]="no"
+        [ForwardX11Trusted]="no"
+        [PasswordAuthentication]="no"
+        [HostbasedAuthentication]="no" # no verified     
+        #   GSSAPIAuthentication no
+        #   GSSAPIDelegateCredentials n
+        #   GSSAPIKeyExchange no
+        #   GSSAPITrustDNS no
+        #   BatchMode no
+        #   CheckHostIP yes
+        #   AddressFamily any
+        #   ConnectTimeout 0
+        #   StrictHostKeyChecking ask
+        #   IdentityFile ~/.ssh/id_rsa
+        #   IdentityFile ~/.ssh/id_dsa
+        #   IdentityFile ~/.ssh/id_ecds
+        #   IdentityFile ~/.ssh/id_ed25
+        [Port]="$PORT"
+        #   Ciphers aes128-ctr,aes192-c
+        #   MACs hmac-md5,hmac-sha1,uma
+        #   EscapeChar ~
+            [Tunnel]="no"
+            [TunnelDevice]="any:any"
+        #   PermitLocalCommand no
+        #   VisualHostKey no
+        #   ProxyCommand ssh -q -W %h:%
+        #   RekeyLimit 1G 1h
+        #   SendEnv LANG LC_*
+        #   HashKnownHosts yes
+        #   GSSAPIAuthentication yes
+    )
+
+        settings_ssh_daemon=(
+        [Port]="$PORT"
+        #AddressFamily any
+        #ListenAddress 0.0.0.0
+        #ListenAddress ::
+
+        #HostKey /etc/ssh/ssh_host_rsa_key
+        #HostKey /etc/ssh/ssh_host_ecdsa_key
+        #HostKey /etc/ssh/ssh_host_ed25519_key
+
+        # Ciphers and keying
+        #RekeyLimit default none
+
+        # Logging
+        #SyslogFacility AUTH
+        [LogLevel]="VERBOSE"
+
+        # Authentication:
+
+        [LoginGraceTime]="2m"
+        [PermitRootLogin]="prohibit-password"
+        #StrictModes yes
+        [MaxAuthTries]="4"
+        [MaxSessions]="6"
+        [PubkeyAuthentication]="yes"
+
+        # Expect .ssh/authorized_keys2 to be disregarded by default in future.
+        #AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
+
+        #AuthorizedPrincipalsFile none
+
+        #AuthorizedKeysCommand none
+        #AuthorizedKeysCommandUser nobody
+
+        # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
+        #HostbasedAuthentication no
+        # Change to yes if you don't trust ~/.ssh/known_hosts for
+        # HostbasedAuthentication
+        #IgnoreUserKnownHosts no
+        # Don't read the user's ~/.rhosts and ~/.shosts files
+        #IgnoreRhosts yes
+
+        # To disable tunneled clear text passwords, change to no here!
+        [PasswordAuthentication]="yes"
+        [PermitEmptyPasswords]="no"
+
+        # Change to yes to enable challenge-response passwords (beware issues with
+        # some PAM modules and threads)
+        [ChallengeResponseAuthentication]="no"
+
+
+        # GSSAPI options
+        #GSSAPIAuthentication no
+        #GSSAPICleanupCredentials yes
+        #GSSAPIStrictAcceptorCheck yes
+        #GSSAPIKeyExchange no
+
+        # Set this to 'yes' to enable PAM authentication, account processing,
+        # and session processing. If this is enabled, PAM authentication will
+        # be allowed through the ChallengeResponseAuthentication and
+        # PasswordAuthentication.  Depending on your PAM configuration,
+        # PAM authentication via ChallengeResponseAuthentication may bypass
+        # the setting of "PermitRootLogin without-password".
+        # If you just want the PAM account and session checks to run without
+        # PAM authentication, then enable this but set PasswordAuthentication
+        # and ChallengeResponseAuthentication to 'no'.
+        [UsePAM]="no"
+
+        [AllowAgentForwarding]="yes"
+        [AllowTcpForwarding]="yes"
+        #GatewayPorts no
+        [X11Forwarding]="no"
+        #X11DisplayOffset 10
+        X11UseLocalhost="no"
+        #PermitTTY yes
+        [PrintMotd]="no"
+        #PrintLastLog yes
+        #TCPKeepAlive yes
+        [PermitUserEnvironment]="no"
+        #Compression delayed
+        #ClientAliveInterval 0
+        [ClientAliveCountMax]="3"
+        #UseDNS no
+        #PidFile /var/run/sshd.pid
+        #MaxStartups 10:30:100
+        [PermitTunnel]="no"
+        [ChrootDirectory]="none"
+        #VersionAddendum none
+
+        # no default banner path
+        [Banner]="none"
+
+        # Allow client to pass locale environment variables
+        [AcceptEnv]="LANG LC_*"
+
+        # override default of no subsystems
+        [Subsystem]="sftp	/usr/lib/openssh/sftp-server"
+
+        # Example of overriding settings on a per-user basis
+        #Match User anoncvs
+        #	PermitTTY no
+        #	ForceCommand cvs server
+
         [DebianBanner]="no"
         [ClientAliveInterval]="10m"  # Adjust this to your desired interval
-        [X11Forwarding]="no"
-        [MaxAuthTries]="4"
-        [LogLevel]="VERBOSE"
-        [Port]="$PORT"
-        [LoginGraceTime]="20"
-        [MaxSessions]="9"
+        
         [GSSAPIAuthentication]="no"
-        [AllowAgentForwarding]="no"
-        # [ForwardAgent]="no"
         # [HostBasedAuthentification]="no"
         # [StrictHostKeyChecking]="ask"
-        [AllowTcpForwarding]="no"
-        [PermitRootLogin]="no"
         [Protocol]="2"
-        [PermitUserEnvironment]="no"
         [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
-        [PermitEmptyPasswords]="no"
-        # PermitTunnel no
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
+   
+ 
+  update_config_file() {
+        local file=$1
+        local setting=$2
+        local value=$3
+        # Define the regex to find settings potentially commented
+        local setting_regex="^\s*#?\s*$setting\s+.*$"
 
+        # First, remove comments if they exist
+        sed -i "s/^#\s*\($setting\s.*\)$/\1/" "$file"
 
-
-    # Loop through each setting and apply changes
-    for setting in "${!settings[@]}"; do
-        value="${settings[$setting]}"
-        setting_regex="^#*$setting .*$"
-
-        # Check if the setting is already correct
-        if grep -q "^$setting $value" "$SSHD_CONFIG"; then
-            echo "$setting is already set to $value."
+        # Now, check if the setting already exists and update it
+        local setting_found=$(grep -E "^$setting\s" "$file")
+        if [[ "$setting_found" ]]; then
+            # If found, replace the existing line with the new value
+            sed -i "s/^$setting\s.*$/$setting $value/" "$file"
+            echo "Updated $setting to $value in $file."
         else
-            # Replace or uncomment the setting, and set to the desired value
-            sed -i "/$setting_regex/c\\$setting $value" "$SSHD_CONFIG"
-            
-            # Ensure the setting is applied correctly
-            if ! grep -q "^$setting $value" "$SSHD_CONFIG"; then
-                echo "$setting $value" >> "$SSHD_CONFIG"
-            fi
-            echo "$setting set to $value."
+            # If not found, simply append it
+            echo "$setting $value" >> "$file"
+            echo "Added $setting with value $value to $file."
         fi
+    }
+    
+    # Apply settings to ssh_config
+    for setting in "${!settings_ssh[@]}"; do
+        update_config_file "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
     done
 
-    # echo "IdentityFile "
-
-#     if grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-#         echo "X11 forwarding is already disabled."
-#     else
-#         # Backup the original config file
-#         cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
-
-#         # Disable X11 Forwarding in SSH - Set X11Forwarding to no
-#         sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-
-#         # Check if X11Forwarding is set to yes and change it
-#         if grep -q "^X11Forwarding yes" "$SSHD_CONFIG"; then
-#             sed -i 's/^X11Forwarding yes/X11Forwarding no/' "$SSHD_CONFIG"
-#         elif ! grep -q "^X11Forwarding no" "$SSHD_CONFIG"; then
-#             # If no X11Forwarding line, add it
-#             echo "X11Forwarding no" >> "$SSHD_CONFIG"
-#         fi
-
-#         systemctl restart sshd
-
-#         echo "X11 forwarding has been disabled."
-#     fi
-
-
-
-#     # Check if MaxAuthTries is already set to 5
-#     if grep -q "^MaxAuthTries 5" "$SSHD_CONFIG"; then
-#         echo "MaxAuthTries is already set to 5."
-#     else
-#         # Attempt to replace any existing MaxAuthTries line
-#         if grep -q "^MaxAuthTries" "$SSHD_CONFIG"; then
-#             # Replace any existing value, regardless of being commented out or not
-#             sed -i 's/^#*\s*MaxAuthTries.*/MaxAuthTries 5/' "$SSHD_CONFIG"
-#             echo "MaxAuthTries set to 5."
-#         else
-#             # If no MaxAuthTries line exists, add it
-#             echo "MaxAuthTries 5" >> "$SSHD_CONFIG"
-#             echo "MaxAuthTries added with value 5."
-#         fi
-#     fi
-
-    
-
-
-#     # Set LogLevel to VERBOSE
-#     if grep -q "^LogLevel VERBOSE" "$SSHD_CONFIG"; then
-#         echo "LogLevel is already set to VERBOSE."
-#     else
-#         # First, try to replace an existing LogLevel line, whether commented or not
-#         if grep -q "^LogLevel" "$SSHD_CONFIG"; then
-#             sed -i "s/^LogLevel .*/LogLevel VERBOSE/" "$SSHD_CONFIG"
-#             echo "LogLevel set to VERBOSE."
-#         else
-#             # If no LogLevel line exists, add it
-#             echo "LogLevel VERBOSE" >> "$SSHD_CONFIG"
-#             echo "LogLevel added as VERBOSE."
-#         fi
-#     fi
-
-#     # Modify default port (22) to X here 1574
-#     if grep -q "^Port $PORT" "$SSHD_CONFIG"; then
-#         echo "Port is already set to $PORT."
-#     else
-# =
-#         sed -i "/^#Port/ c\Port $PORT" "$SSHD_CONFIG"
-#         sed -i "/^Port [0-9]*/c\Port $PORT" "$SSHD_CONFIG"
-
-#         if ! grep -q "^Port" "$SSHD_CONFIG"; then
-#             echo "Port $PORT" >> "$SSHD_CONFIG"
-#         fi
-    
-#         echo "Port fixed to $PORT"
-#     fi
-
-
-#     # Set DebianBanner
-#     if grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
-#         echo "DebianBanner is already set to NO."
-#     else
-#         # Replace or uncomment DebianBanner setting
-#         sed -i '/^#*DebianBanner /c\DebianBanner no' "$SSHD_CONFIG"
-#         if ! grep -q "^DebianBanner no" "$SSHD_CONFIG"; then
-#             echo "DebianBanner no" >> "$SSHD_CONFIG"
-#         fi
-#         echo "Debian banner set to no"
-#     fi
-
-#     # Set ClientAliveInterval
-#     if grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
-#         echo "ClientAliveInterval is already set to $CINTERVAL."
-#     else
-#         # Replace or uncomment ClientAliveInterval setting
-#         sed -i "/^#*ClientAliveInterval /c\ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"
-#         if ! grep -q "^ClientAliveInterval $CINTERVAL" "$SSHD_CONFIG"; then
-#             echo "ClientAliveInterval $CINTERVAL" >> "$SSHD_CONFIG"
-#         fi
-#         echo "ClientAliveInterval set to $CINTERVAL."
-#     fi
-
-
+    # Apply settings to sshd_config
+    for setting in "${!settings_ssh_daemon[@]}"; do
+        update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
+    done
 }
 
-# UPnP (Universal Plug and Play)
+
+
+
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
    echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
-   read -p "Do you use Kerberos ? (y/n): " kerberos_response
+   read -p "Do you use Kerberos and want to disable it ? (y/n): " kerberos_response
 
     kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
+
+    echo "KerberosTicketCleanup no" >> "$SSHD_CONFIG"
+    echo "KerberosGetAFSToken no" >>"$SSHD_CONFIG"
 
     if [[ "$kerberos_response" == "y" ]]; then
         echo "Disabling Kerberos Authentification in sshd_config..."
@@ -666,18 +672,18 @@ kerberos_setup_sshd() {
         fi
         echo "KerberosOrLocalPassword set to no"
     fi
-
-
-
+    
 
     elif [[ "$kerberos_response" == "n" ]]; then
         echo "Kerberos authentification has not been disabled."
     else
         echo "Invalid input. Please enter 'y' for yes or 'n' for no."
     fi
+
+
+
+
 }
-
-
 
 # UPnP (Universal Plug and Play)
 upnp_desactivation() {
@@ -701,7 +707,6 @@ upnp_desactivation() {
     fi
 }
 
-
 main() {
     sys_upgrades
     unattended_upg
@@ -709,7 +714,6 @@ main() {
     purge_telnet
     purge_nfs
     purge_whoopsie
-    set_chkrootkit
     harden_ssh_brute
     harden_ssh
     logwatch_reporter
@@ -723,16 +727,21 @@ main() {
     upnp_desactivation
     setup_ssh_ed25519
     # kernel_tuning
-
     # Created by me, need to verify if to preserver or not
     slap_disable
     nfs_disable
+    set_chkrootkit
 }
 
 main "$@"
 
 purge_useless_packages
 
+
+set_chkrootkit() {
+    apt-get --yes install chkrootkit
+    chkrootkit
+}
 
 
 # EOF
@@ -760,7 +769,6 @@ purge_useless_packages
 # It highly depends on your needs, but if an authentification method is unused, it should be disabled as it increases the attack surface to exploits and vulnerabilities.
 # Side note: Please ensure you don't disable the only method you can log in to prevent a lockout. 
 
-
 # PermitTunnel no
 # # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
 # Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
@@ -769,7 +777,6 @@ purge_useless_packages
 # Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. 
 # Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. 
 # Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
-
 
 # MaxAuthTries
 # # Signification : Définit le nombre maximum de tentatives d'authentification autorisées par connexion.
@@ -793,8 +800,6 @@ purge_useless_packages
 # Configuration recommandée : DenyUsers user3 user4 et/ou DenyGroups group3 group4 pour bloquer l'accès à des utilisateurs ou groupes spécifiques.
 
 # Récapitulatif des valeurs recommandées
-
-
 
 # #!/bin/bash
 # # Script to harden ssh on ubuntu/debian server
@@ -821,7 +826,6 @@ purge_useless_packages
 # read -p "Do you want to disable empty passwords?[Y/n]" -n 1 emptyPass;printf "\n"
 # read -p "Do you want to disable X11 forwarding?[Y/n]" -n 1 x11Forwarding;printf "\n"
 # read -p "Do you want to enable TCPKeepAlive to avoid zombies?[Y/n]" -n 1 zombies;printf "\n"
-
 
 # echo "cat /etc/ssh/sshd_config > /etc/ssh/sshd_config.bak" > .local_script_$0
 
@@ -859,10 +863,6 @@ purge_useless_packages
 # rm .local_script_$0
 # echo "Success"
 # exit
-
-
-
-
 
 #  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
 
