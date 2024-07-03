@@ -22,7 +22,8 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 
 declare -i PORT
 $PORT=1754
-
+read -p "Enter the name of your remote server: " SERVER_NAME
+read -p "What is the SSH port number on the remote server? " SSH_PORT
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -49,12 +50,8 @@ STEP_TEXT=(
 # SSH_KEY="/path/to/your/private/key"
 # EMAIL="your_email@example.com"
 
-read -p "Enter the name of your remote server: " SERVER_NAME
-read -p "What is the SSH port number on the remote server? " SSH_PORT
 SSH_PRE_PATH="~/.ssh/id_ed25519"
 SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
-
-
 
 # Function to set up SSH key-based authentication using Ed25519
 setup_ssh_ed25519() {
@@ -524,7 +521,7 @@ harden_sshd_config() {
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
    echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
-   read -p "Do you use Kerberos ? (y/n): " kerberos_response
+   read -p "Do you use Kerberos and want to disable it ? (y/n): " kerberos_response
 
     kerberos_response="${kerberos_response,,}"  # ,, converts to lowercase
 
@@ -582,7 +579,6 @@ upnp_desactivation() {
     fi
 }
 
-
 main() {
     sys_upgrades
     unattended_upg
@@ -604,7 +600,6 @@ main() {
     upnp_desactivation
     setup_ssh_ed25519
     # kernel_tuning
-
     # Created by me, need to verify if to preserver or not
     slap_disable
     nfs_disable
@@ -613,10 +608,6 @@ main() {
 main "$@"
 
 purge_useless_packages
-
-
-
-
 
 # EOF
 # )
