@@ -26,7 +26,7 @@ apt update
 
 # Install Nginx if not already installed
 echo "Installing Nginx ..."
-apt install -y nginx  apt-utils autoconf automake libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev certbot
+apt install -qqy apt-utils autoconf automake libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev certbot
 echo -e "$install_date - Installation des packages pour Nginx et Modprobe realisee.\n" >> $dir
 
 # Mise en pause de Nginx pendant leur configuration / Stop Nginx and Apache2 before installing and setting up the config for modsecurity
