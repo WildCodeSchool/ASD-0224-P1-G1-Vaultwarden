@@ -189,8 +189,6 @@ purge_whoopsie() { # disable telemetry - less layers to add more security     # 
     apt-get --yes purge whoopsie
 }
 
-
-
 ### Verify if using ssh or openssh
 harden_ssh_brute() {
     # Many attackers will try to use your SSH server to brute-force passwords.
@@ -721,7 +719,6 @@ main() {
     purge_telnet
     purge_nfs
     purge_whoopsie
-    set_chkrootkit
     harden_ssh_brute
     harden_ssh
     logwatch_reporter
@@ -738,6 +735,7 @@ main() {
     # Created by me, need to verify if to preserver or not
     slap_disable
     nfs_disable
+    set_chkrootkit
 }
 
 main "$@"
