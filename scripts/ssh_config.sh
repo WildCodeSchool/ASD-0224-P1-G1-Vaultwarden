@@ -166,7 +166,8 @@ harden_sshd_config() {
         [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
-    update_config_file() {
+
+   update_config_file() {
         local file=$1
         local setting=$2
         local value=$3
@@ -174,8 +175,13 @@ harden_sshd_config() {
         local setting_found=$(grep -E "$setting_regex" "$file")
 
         if [[ "$setting_found" ]]; then
-            sed -i "/$setting_regex/c\\$setting $value" "$file"
-            echo "Updated $setting to $value in $file."
+            local current_value=$(echo "$setting_found" | sed -E "s/^#?\s*$setting\s+(.*)$/\1/")
+            if [[ "$current_value" != "$value" ]]; then
+                sed -i "/$setting_regex/c\\$setting $value" "$file"
+                echo "Updated $setting $setting from $current_value to $value in $file."
+            else
+                echo "$setting is already set to $value; no changes made."
+            fi
         else
             echo "$setting $value" >> "$file"
             echo "Added $setting with value $value to $file."
