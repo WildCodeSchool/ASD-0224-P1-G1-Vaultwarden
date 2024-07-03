@@ -7,7 +7,6 @@
 
 # Declaration variables pour logging
 dir="/tmp/install_log.txt"
-space=echo "" >> "$dir"
 install_date="$(date +'%Y_%m_%d')"
 
 # Check if running as root

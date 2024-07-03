@@ -5,7 +5,7 @@
 
 dir="/home/install_log.txt"
 install_date="$(date +'%Y_%m_%d')"
-vault_dir="/home/vaulwarden/logs"
+vault_dir="/home/vaultwarden/logs"
 
 # Sys and app update 
 echo -e "System update. Please, enter root password when asked to: "
