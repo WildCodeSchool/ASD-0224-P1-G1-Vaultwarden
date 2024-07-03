@@ -20,9 +20,7 @@ SSH_KEY="/path/to/your/private/key"
 
 SSH_CONFIG="/etc/ssh/ssh_config"  
 SSHD_CONFIG="/etc/ssh/sshd_config"  
-
-declare -i PORT
-PORT=1754
+declare -i PORT=1754
 
 read -p "Enter the name of your remote server: " SERVER_NAME
 read -p "What is the SSH port number on the remote server? " SSH_PORT
@@ -601,47 +599,44 @@ harden_sshd_config() {
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
-    # Loop through each setting and apply changes
+   
+ 
+  update_config_file() {
+        local file=$1
+        local setting=$2
+        local value=$3
+        # Define the regex to find settings potentially commented
+        local setting_regex="^\s*#?\s*$setting\s+.*$"
+
+        # First, remove comments if they exist
+        sed -i "s/^#\s*\($setting\s.*\)$/\1/" "$file"
+
+        # Now, check if the setting already exists and update it
+        local setting_found=$(grep -E "^$setting\s" "$file")
+        if [[ "$setting_found" ]]; then
+            # If found, replace the existing line with the new value
+            sed -i "s/^$setting\s.*$/$setting $value/" "$file"
+            echo "Updated $setting to $value in $file."
+        else
+            # If not found, simply append it
+            echo "$setting $value" >> "$file"
+            echo "Added $setting with value $value to $file."
+        fi
+    }
+    
+    # Apply settings to ssh_config
     for setting in "${!settings_ssh[@]}"; do
-        value="${settings_ssh[$setting]}"
-        setting_regex="^#*$setting .*$"
-
-        # Check if the setting is already correct
-        if grep -q "^$setting $value" "$SSH_CONFIG"; then
-            echo "$setting is already set to $value."
-        else
-            # Replace or uncomment the setting, and set to the desired value
-            sed -i "/$setting_regex/c\\$setting $value" "$SSH_CONFIG"
-            
-            # Ensure the setting is applied correctly
-            if ! grep -q "^$setting $value" "$SSH_CONFIG"; then
-                echo "$setting $value" >> "$SSH_CONFIG"
-            fi
-            echo "$setting set to $value."
-        fi
+        update_config_file "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
     done
 
-    # Loop through each setting and apply changes
+    # Apply settings to sshd_config
     for setting in "${!settings_ssh_daemon[@]}"; do
-        value="${settings_ssh_daemon[$setting]}"
-        setting_regex="^#*$setting .*$"
-
-        # Check if the setting is already correct
-        if grep -q "^$setting $value" "$SSHD_CONFIG"; then
-            echo "$setting is already set to $value."
-        else
-            # Replace or uncomment the setting, and set to the desired value
-            sed -i "/$setting_regex/c\\$setting $value" "$SSHD_CONFIG"
-            
-            # Ensure the setting is applied correctly
-            if ! grep -q "^$setting $value" "$SSHD_CONFIG"; then
-                echo "$setting $value" >> "$SSHD_CONFIG"
-            fi
-            echo "$setting set to $value."
-        fi
+        update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
     done
-
 }
+
+
+
 
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation

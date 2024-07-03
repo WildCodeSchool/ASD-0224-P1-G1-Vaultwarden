@@ -2,12 +2,13 @@
 
 SSH_CONFIG="/etc/ssh/ssh_config"  
 SSHD_CONFIG="/etc/ssh/sshd_config"  
+declare -i PORT=1754
 
 harden_sshd_config() {
-    CINTERVAL="10m"
-    PORT=1754
 
-    # Debug information
+    echo "$SSH_CONFIG"
+    echo "$SSHD_CONFIG"
+    echo "Port set to $PORT" 
     echo "Configuring $SSH_CONFIG and $SSHD_CONFIG for port $PORT."
 
     # Ensure the script is run as root
@@ -18,12 +19,12 @@ harden_sshd_config() {
 
     declare -A settings_ssh
     settings_ssh=(
-        [Port]="$PORT"
         [ForwardAgent]="yes"
         [ForwardX11]="no"
         [ForwardX11Trusted]="no"
         [PasswordAuthentication]="no"
         [HostbasedAuthentication]="no"
+        [Port]="$PORT"
         [Tunnel]="no"
         [TunnelDevice]="any:any"
     )
@@ -44,6 +45,7 @@ harden_sshd_config() {
         [AllowAgentForwarding]="yes"
         [AllowTcpForwarding]="yes"
         [X11Forwarding]="no"
+        [X11UseLocalhost]="no"
         [PrintMotd]="no"
         [PermitUserEnvironment]="no"
         [ClientAliveCountMax]="3"
@@ -59,33 +61,39 @@ harden_sshd_config() {
         [UsePrivilegeSeparation]="no"
     )
 
+ 
+  update_config_file() {
+        local file=$1
+        local setting=$2
+        local value=$3
+        # Define the regex to find settings potentially commented
+        local setting_regex="^\s*#?\s*$setting\s+.*$"
+
+        # First, remove comments if they exist
+        sed -i "s/^#\s*\($setting\s.*\)$/\1/" "$file"
+
+        # Now, check if the setting already exists and update it
+        local setting_found=$(grep -E "^$setting\s" "$file")
+        if [[ "$setting_found" ]]; then
+            # If found, replace the existing line with the new value
+            sed -i "s/^$setting\s.*$/$setting $value/" "$file"
+            echo "Updated $setting to $value in $file."
+        else
+            # If not found, simply append it
+            echo "$setting $value" >> "$file"
+            echo "Added $setting with value $value to $file."
+        fi
+    }
+    
     # Apply settings to ssh_config
     for setting in "${!settings_ssh[@]}"; do
-        apply_setting "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
+        update_config_file "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
     done
 
     # Apply settings to sshd_config
     for setting in "${!settings_ssh_daemon[@]}"; do
-        apply_setting "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
+        update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
     done
 }
 
-apply_setting() {
-    local file=$1
-    local setting=$2
-    local value=$3
-    local setting_regex="^#*$setting .*$"
-
-    if grep -q "^$setting $value" "$file"; then
-        echo "$setting is already set to $value."
-    else
-        sed -i "/$setting_regex/c\\$setting $value" "$file"
-        if ! grep -q "^$setting $value" "$file"; then
-            echo "$setting $value" >> "$file"
-        fi
-        echo "$setting set to $value in $file."
-    fi
-}
-
-# Execute the function
 harden_sshd_config
