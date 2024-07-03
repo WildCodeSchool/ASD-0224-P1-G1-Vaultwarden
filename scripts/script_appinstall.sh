@@ -2,10 +2,10 @@
 
 # The administrator has to know the root password and add the execution rights to the script before launching it
 # Variables
-space=echo "" >> "$dir"
+
 dir="/tmp/install_log.txt"
 install_date="$(date +'%Y_%m_%d')"
-
+space=echo "" >> "$dir"
 # Sys and app update 
 echo "System update. Please, enter root password when asked to: "
 sudo apt update && sudo apt upgrade -y  
