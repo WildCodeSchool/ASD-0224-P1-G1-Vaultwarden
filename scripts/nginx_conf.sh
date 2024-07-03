@@ -63,7 +63,8 @@ EOF
 echo -e "$install_date - Parametrage Nginx reverse proxy et preparation Modprobe.\n" >> $dir
 
 # Recuperation et installation de ModSecurity
-git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/local/src
+rm -rf /usr/local/src/ModSecurity/
+git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/local/src/ModSecurity
 cd /usr/local/src/ModSecurity/
 git submodule init
 git submodule update --remote
