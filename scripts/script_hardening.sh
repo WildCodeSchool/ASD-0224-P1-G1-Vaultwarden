@@ -18,6 +18,7 @@ REMOTE_HOST="your_remote_host"
 REMOTE_PORT="22" # Default SSH port, change if necessary
 SSH_KEY="/path/to/your/private/key"
 
+SSH_CONFIG="/etc/ssh/ssh_config"  
 SSHD_CONFIG="/etc/ssh/sshd_config"  
 
 declare -i PORT
@@ -472,7 +473,7 @@ harden_sshd_config() {
         exit 1
     fi
 
-    settings=(
+    settings_ssh=(
         [DebianBanner]="no"
         [ClientAliveInterval]="10m"  # Adjust this to your desired interval
         [X11Forwarding]="no"
@@ -496,9 +497,36 @@ harden_sshd_config() {
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
+        settings_ssh_daemon=(
+        [Port]="$PORT"
+    )
+
     # Loop through each setting and apply changes
-    for setting in "${!settings[@]}"; do
-        value="${settings[$setting]}"
+    for setting in "${!settings_ssh[@]}"; do
+        value="${settings_ssh[$setting]}"
+        setting_regex="^#*$setting .*$"
+
+        # Check if the setting is already correct
+        if grep -q "^$setting $value" "$SSH_CONFIG"; then
+            echo "$setting is already set to $value."
+        else
+            # Replace or uncomment the setting, and set to the desired value
+            sed -i "/$setting_regex/c\\$setting $value" "$SSH_CONFIG"
+            
+            # Ensure the setting is applied correctly
+            if ! grep -q "^$setting $value" "$SSH_CONFIG"; then
+                echo "$setting $value" >> "$SSH_CONFIG"
+            fi
+            echo "$setting set to $value."
+        fi
+    done
+
+
+
+
+    # Loop through each setting and apply changes
+    for setting in "${!settings_ssh_daemon[@]}"; do
+        value="${settings_ssh_daemon[$setting]}"
         setting_regex="^#*$setting .*$"
 
         # Check if the setting is already correct
@@ -515,7 +543,15 @@ harden_sshd_config() {
             echo "$setting set to $value."
         fi
     done
+
 }
+
+
+
+
+
+
+
 
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
