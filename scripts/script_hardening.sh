@@ -443,22 +443,6 @@ check_selinux() {
 check_apparmor
 check_selinux
 
-# Plus simple à reprendre, je vous propose un tableau des valeurs recommandées :
-# Paramètre	Valeur recommandée
-# Protocol	2
-# LogLevel	VERBOSE
-# PermitRootLogin	no
-# PasswordAuthentication	no
-# ChallengeResponseAuthentication	no
-# AllowAgentForwarding	no
-# PermitTunnel	no
-# X11Forwarding	no
-# MaxAuthTries	3
-# UsePAM	yes
-# ClientAliveInterval	0
-# ClientAliveCountMax	2
-# LoginGraceTime	300
-
 harden_sshd_config() {
     CINTERVAL="10m"
 
@@ -527,11 +511,10 @@ harden_sshd_config() {
         # Authentication:
 
         #LoginGraceTime 2m
-        #PermitRootLogin prohibit-password
+        [PermitRootLogin]="prohibit-password"
         #StrictModes yes
-        #MaxAuthTries 6
-        #MaxSessions 10
-
+        [MaxAuthTries]="4"
+        [MaxSessions]="6"
         #PubkeyAuthentication yes
 
         # Expect .ssh/authorized_keys2 to be disregarded by default in future.
@@ -622,16 +605,14 @@ harden_sshd_config() {
         [DebianBanner]="no"
         [ClientAliveInterval]="10m"  # Adjust this to your desired interval
         [X11Forwarding]="no"
-        [MaxAuthTries]="4"
         [Port]="$PORT"
         [LoginGraceTime]="20"
-        [MaxSessions]="9"
+        
         [GSSAPIAuthentication]="no"
         [AllowAgentForwarding]="yes"
         # [HostBasedAuthentification]="no"
         # [StrictHostKeyChecking]="ask"
         [AllowTcpForwarding]="yes"
-        [PermitRootLogin]="no"
         [Protocol]="2"
         [PermitUserEnvironment]="no"
         [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
