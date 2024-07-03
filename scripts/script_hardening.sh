@@ -559,8 +559,8 @@ harden_sshd_config() {
         # and ChallengeResponseAuthentication to 'no'.
         [UsePAM]="no"
 
-        #AllowAgentForwarding yes
-        #AllowTcpForwarding yes
+        [AllowAgentForwarding]="yes"
+        [AllowTcpForwarding]="yes"
         #GatewayPorts no
         [X11Forwarding]="no"
         #X11DisplayOffset 10
@@ -569,19 +569,19 @@ harden_sshd_config() {
         [PrintMotd]="no"
         #PrintLastLog yes
         #TCPKeepAlive yes
-        #PermitUserEnvironment no
+        [PermitUserEnvironment]="no"
         #Compression delayed
         #ClientAliveInterval 0
-        #ClientAliveCountMax 3
+        [ClientAliveCountMax]="3"
         #UseDNS no
         #PidFile /var/run/sshd.pid
         #MaxStartups 10:30:100
-        #PermitTunnel no
-        #ChrootDirectory none
+        [PermitTunnel]="no"
+        [ChrootDirectory]="none"
         #VersionAddendum none
 
         # no default banner path
-        #Banner none
+        [Banner]="none"
 
         # Allow client to pass locale environment variables
         [AcceptEnv]="LANG LC_*"
@@ -591,8 +591,6 @@ harden_sshd_config() {
 
         # Example of overriding settings on a per-user basis
         #Match User anoncvs
-        #	X11Forwarding no
-        #	AllowTcpForwarding no
         #	PermitTTY no
         #	ForceCommand cvs server
 
@@ -600,15 +598,10 @@ harden_sshd_config() {
         [ClientAliveInterval]="10m"  # Adjust this to your desired interval
         
         [GSSAPIAuthentication]="no"
-        [AllowAgentForwarding]="yes"
         # [HostBasedAuthentification]="no"
         # [StrictHostKeyChecking]="ask"
-        [AllowTcpForwarding]="yes"
         [Protocol]="2"
-        [PermitUserEnvironment]="no"
         [UsePrivilegeSeparation]="no" # Setting privilege separation helps to secure remote ssh access. Once a user is authenticated the sshd daemon creates a child process which has the privileges of the authenticated user and this then handles incoming network traffic. The aim of this is to prevent privilege escalation through the initial root process.
-        [PermitEmptyPasswords]="no"
-        [PermitTunnel]="no"
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
@@ -653,13 +646,6 @@ harden_sshd_config() {
     done
 
 }
-
-
-
-
-
-
-
 
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
