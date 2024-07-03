@@ -517,7 +517,6 @@ harden_sshd_config() {
     done
 }
 
-# UPnP (Universal Plug and Play)
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
    echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
