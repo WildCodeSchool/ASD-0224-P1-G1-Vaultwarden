@@ -5,7 +5,6 @@
 space=echo "" >> "$dir"
 dir="/tmp/install_log.txt"
 install_date="$(date +'%Y_%m_%d')"
-# | sed 's/[^[:print:]]//')
 
 # Sys and app update 
 echo "System update. Please, enter root password when asked to: "
