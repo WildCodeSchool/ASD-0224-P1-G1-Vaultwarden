@@ -5,69 +5,62 @@
 
 dir="/home/install_log.txt"
 install_date="$(date +'%Y_%m_%d')"
-space=echo "" >> "$dir"
 vault_dir="/home/vaulwarden/logs"
 
 # Sys and app update 
-echo "System update. Please, enter root password when asked to: "
+echo -e "System update. Please, enter root password when asked to: "
 sudo apt update && sudo apt upgrade -y  
 if [ $? -ne 0 ]; then
-    echo "Echec de la mise à jour. Please, check the error message."
+    echo -e "Echec de la mise à jour. Please, check the error message."
 fi
-echo "apt updated and ready to run."
-echo "$install_date - Update and upgrades done." > $dir
-$space
+echo -e "apt updated and ready to run."
+echo -e "$install_date - Update and upgrades done. \n" > $dir
 
 # Apps and packages install
 
-echo "VaultWarden's required applications are about to be installed."
+echo -e "VaultWarden's required applications are about to be installed."
 
 # build-essential install
-echo "Installing build-essential..."
+echo -e "Installing build-essential..."
 sudo apt install -qqy build-essential
 if [ $? -ne 0 ]; then
-    echo "Could not install build-essential. Please, check the error message."
+    echo -e "Could not install build-essential. Please, check the error message."
 fi
-echo "Install complete"
-echo "$install_date - Update and upgrades done on " + $(hostname) + "." >> $dir
-$space
+echo -e "Install complete"
+echo -e "$install_date - Update and upgrades done on $(hostname). \n" >> $dir
 
 # Installing curl
-echo "Installing curl..."
+echo -e "Installing curl..."
 sudo apt install -qqy curl
 if [ $? -ne 0 ]; then
-    echo "Could not install curl. Please, check the error message."
+    echo -e "Could not install curl. Please, check the error message."
 fi
-echo "curl install complete"
-echo "$install_date - Installed curl on " + $(hostname) + "." >> $dir
-$space
+echo -e "curl install complete"
+echo -e -e "$install_date - Installed curl on $(hostname). \n" >> $dir
 
 # Installing git
-echo "Installing git..."
+echo -e "Installing git..."
 sudo apt install -qqy git 
 if [ $? -ne 0 ]; then
-    echo "Could not install git. Please, check the error message."
+    echo -e "Could not install git. Please, check the error message."
 fi
-echo "Git install complete"
-echo "$install_date - Installed git on $(hostname)." >> $dir
-$space
+echo -e "Git install complete"
+echo -e "$install_date - Installed git on $(hostname). \n" >> $dir
 
 # Installing nginx pour reverse-proxy
-echo "Installing Nginx..."
+echo -e "Installing Nginx..."
 sudo apt install -qqy nginx 
 if [ $? -ne 0 ]; then
-    echo "Could not install nginx. Please, check the error message."
+    echo -e "Could not install nginx. Please, check the error message."
 fi
-echo "Install complete"
-echo "$install_date - Installed nginx on $(hostname)." >> $dir
-$space
+echo -e "Install complete"
+echo -e "$install_date - Installed nginx on $(hostname). \n" >> $dir
 
 #Clone vaultwarden repo at "/home"
 cd /home
 git clone https://github.com/dani-garcia/vaultwarden.git
 
-echo "$install_date - Downloaded github repo on $(hostname)." >> $dir
-$space
+echo -e "$install_date - Downloaded github repo on $(hostname). \n" >> $dir
 
 #Download pre-build web
 cd /home/vaultwarden
@@ -77,19 +70,17 @@ tar -xvzf bw_web_v2024.5.1.tar.gz
 #Rocket - Install & Prérequis
 apt install -y pkg-config libssl-dev libmariadb-dev-compat libmariadb-dev gcc
 if [ $? -ne 0 ]; then
-    echo "Could not install some or all the libraries. Please, check the error message(s)"
+    echo -e "Could not install some or all the libraries. Please, check the error message(s)"
 fi
-echo "Install complete"
-echo "$install_date - Installed Vaultwarden required libraries on $(hostname)." >> $dir
-$space
+echo -e "Install complete"
+echo -e "$install_date - Installed Vaultwarden required libraries on $(hostname). \n" >> $dir
 
 snap install rustup --classic
 if [ $? -ne 0 ]; then
-    echo "Could not install rustup. Please, check the error message."
+    echo -e "Could not install rustup. Please, check the error message."
 fi
-echo "Install complete"
-echo "$install_date - Installed rustup on $(hostname)." >> $dir
-$space
+echo -e "Install complete"
+echo -e "$install_date - Installed rustup on $(hostname). \n" >> $dir
 
 mkdir $vault_dir && mv $dir "$vault_dir/install_log.txt"
 
