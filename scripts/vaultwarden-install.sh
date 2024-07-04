@@ -105,7 +105,7 @@ After=network.target
 [Service]
 User=${USER_NAME}
 WorkingDirectory=${PROJECT_DIR}
-ExecStart=/usr/bin/cargo run --features sqlite --release
+ExecStart=/snap/bin/cargo run --features sqlite --release
 Restart=always
 Environment=RUST_LOG=info
 
