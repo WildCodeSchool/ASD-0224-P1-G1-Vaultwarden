@@ -99,7 +99,7 @@ SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 echo "Creating service file at ${SERVICE_FILE}..."
 sudo bash -c "cat > ${SERVICE_FILE}" <<EOL
 [Unit]
-Description=Service pour exécuter Vaultwarden avec SQLite
+Description=Vaultwarden
 After=network.target
 
 [Service]
