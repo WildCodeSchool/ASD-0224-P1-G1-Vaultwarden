@@ -88,6 +88,44 @@ rustup default stable
 
 mkdir data/
 
-cd /home/vaultwarden
+## Creation du service Vaultwarden
+# Définir les variables
+SERVICE_NAME="vaultwarden"
+USER_NAME=$(whoami)
+PROJECT_DIR=/home/vaultwarden
+SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
-cargo run --features sqlite --release &
+# Créer le fichier de service
+echo "Creating service file at ${SERVICE_FILE}..."
+sudo bash -c "cat > ${SERVICE_FILE}" <<EOL
+[Unit]
+Description=Service pour exécuter Vaultwarden avec SQLite
+After=network.target
+
+[Service]
+User=${USER_NAME}
+WorkingDirectory=${PROJECT_DIR}
+ExecStart=/usr/bin/cargo run --features sqlite --release
+Restart=always
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Recharger le daemon systemd
+echo "Reloading systemd daemon..."
+sudo systemctl daemon-reload
+
+# Activer le service pour qu'il démarre au démarrage
+echo "Enabling ${SERVICE_NAME} service to start on boot..."
+sudo systemctl enable ${SERVICE_NAME}.service
+
+# Démarrer le service
+echo "Starting ${SERVICE_NAME} service..."
+sudo systemctl start ${SERVICE_NAME}.service
+
+# Vérifier l'état du service
+echo "Checking the status of ${SERVICE_NAME} service..."
+sudo systemctl status ${SERVICE_NAME}.service
+
