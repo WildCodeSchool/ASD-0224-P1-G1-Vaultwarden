@@ -38,6 +38,7 @@ systemctl stop nginx
 ##################################
 certbot certonly --manual --preferred-challenges dns -d "*.$domaine" -d $domaine
 echo -e "$install_date - Certificat recupere.\n" >> $dir
+echo -e "\nFin install Certbot\n" && pause
 
 # Configure Nginx
 echo "Configuring Nginx as a reverse proxy..."
@@ -61,6 +62,7 @@ server {
 }
 EOF
 echo -e "$install_date - Parametrage Nginx reverse proxy et preparation Modprobe.\n" >> $dir
+echo -e "\nFin modif conf Nginx\n" && pause
 
 # Recuperation et installation de ModSecurity
 rm -rf /usr/local/src/ModSecurity/
@@ -68,23 +70,28 @@ git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/M
 cd /usr/local/src/ModSecurity/
 git submodule init
 git submodule update --remote
+echo -e "\nFin recup git Modsecurity\n" && pause
 ./build.sh
 ./configure
 make
 make install
+echo -e "\nFin make install Modsecurity\n" && pause
 
 # Module ModSecurity pour Nginx
 rm -rf /usr/local/src/ModSecurity-nginx
 git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src/ModSecurity-nginx
 cd /usr/local/src/ModSecurity-nginx
+echo -e "\nFin git clone Modsecurity-nginx\n" && pause
 nginx_vers=$(nginx -v 2>&1 | awk -F'/' '{print $2}' | awk -F' ' '{print $1}')
 wget http://nginx.org/download/nginx-$nginx_vers.tar.gz
 tar zxvf nginx-$nginx_vers.tar.gz
 cd nginx-$nginx_vers/
 ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
 make modules
+echo -e "\nFin make module Modsecurity-nginx\n" && pause
 cp /usr/local/src/ModSecurity-nginx/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules/
 echo -e "$install_date - Recuperation et compilation de Modprobe OK.\n" >> $dir
+echo -e "\nFin copie Modsecurity-nginx dans modules Nginx\n" && pause
 
 # Ajout du load module a la conf Nginx
 sed -i '/include \/etc\/nginx\/modules-enabled\/\*\.conf;/a load_module \/etc\/nginx\/modules\/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf
@@ -94,8 +101,10 @@ mkdir /etc/nginx/modsec
 wget -P /etc/nginx/modsec/ https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/modsecurity.conf-recommended
 mv /etc/nginx/modsec/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf
 cp /usr/local/src/ModSecurity/unicode.mapping /etc/nginx/modsec/
+echo -e "\nRecuperation de la conf recomended\n" && pause
 
 sed -i 's/DetectionOnly/On/' /etc/nginx/modsec/modsecurity.conf
+echo -e "\nModif config modsecurity\n" && pause
 
 echo -e "Include \"/etc/nginx/modsec/modsecurity.conf\"" > /etc/nginx/modsec/main.conf
 
@@ -103,9 +112,12 @@ echo -e "Include \"/etc/nginx/modsec/modsecurity.conf\"" > /etc/nginx/modsec/mai
 cd /usr/local/src
 wget https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/refs/tags/v3.2.0.tar.gz
 tar -xzvf v3.2.0.tar.gz
+echo -e "\nRecuperation et decompression regles OWASP\n" && pause
+
 cd owasp-modsecurity-crs-3.2.0/
 cp crs-setup.conf.example crs-setup.conf
 echo -e "$install_date - Application des regles de securite de base OWASP.\n" >> $dir
+echo -e "\nCopie regles OWASP\n" && pause
 
 #################################################################
 ##### choix du site a surveiller/ liste d esceptions ajouter ####
