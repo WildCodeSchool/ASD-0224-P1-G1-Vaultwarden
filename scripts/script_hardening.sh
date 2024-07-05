@@ -71,18 +71,18 @@ setup_ssh_ed25519() {
         # Restart SSH service
         sudo systemctl restart sshd
 
-        echo "SSH configuration restarted."
+        echo "$STEP_ICON SSH configuration restarted."
 EOF
 
     cd ~/.ssh
     sudo ssh-agent bash
     ssh-add $SSH_KEY_PATH
 
-    echo "SSH key-based authentication setup using $SSH_PRE_PATH is complete."
+    echo "$STEP_ICON SSH key-based authentication setup using $SSH_PRE_PATH is complete."
 }
 
 # Call the function to set up SSH key-based authentication
-echo "The virtualization platform used is : "
+echo "$STEP_ICON The virtualization platform used is : "
 systemd-detect-virt
 
 echo "List of steps that this script do : "
@@ -271,6 +271,7 @@ nfs_disable() {
 process_accounting() {
     # Linux process accounting keeps track of all sorts of details about which commands have been run on the server, who ran them, when, etc.
     apt-get --yes --force-yes install acct
+    echo "$STEP_ICON Bellow will be show somes usefull security related informations"
     cd /
     touch /var/log/wtmp
     cd
@@ -623,11 +624,11 @@ harden_sshd_config() {
         if [[ "$setting_found" ]]; then
             # If found, replace the existing line with the new value
             sed -i "s/^$setting\s.*$/$setting $value/" "$file"
-            echo "Updated $setting to $value in $file."
+            echo "$STEP_ICON Updated $setting to $value in $file."
         else
             # If not found, simply append it
             echo "$setting $value" >> "$file"
-            echo "Added $setting with value $value to $file."
+            echo "$STEP_ICON Added $setting with value $value to $file."
         fi
     }
     
@@ -662,7 +663,7 @@ kerberos_setup_sshd() {
         # Replace or uncomment DebianBanner setting
         sed -i '/^#*KerberosAuthentication /c\KerberosAuthentication no' "$SSHD_CONFIG"
         if ! grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
-            echo "$STEP_ICON KerberosAuthentication no" >> "$SSHD_CONFIG"
+            echo "KerberosAuthentication no" >> "$SSHD_CONFIG"
         fi
         echo "$STEP_ICON KerberosAuthentication set to no"
     fi
@@ -673,7 +674,7 @@ kerberos_setup_sshd() {
         # Replace or uncomment DebianBanner setting
         sed -i '/^#*KerberosOrLocalPassword /c\KerberosOrLocalPassword no' "$SSHD_CONFIG"
         if ! grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
-            echo "$STEP_ICON KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
+            echo "KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
         fi
         echo "$STEP_ICON KerberosOrLocalPassword set to no"
     fi
