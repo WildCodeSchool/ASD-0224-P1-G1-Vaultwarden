@@ -11,46 +11,47 @@
 # - Firewall status
 # ================================================= #
 
-dir="/tmp/final-log.txt"
+dir="/tmp/install_log.txt"
+space=echo "" >> "$dir"
 
 # UNIX system version check
-echo "System version:" > "$dir"
+echo "System version:" >> "$dir"
 uname -a >> "$dir"
-echo "" >> "$dir"
+$space
 
 # Storage available check
 echo "Storage available:" >> "$dir"
 df -h >> "$dir"
-echo "" >> "$dir"
+$space
 
 # Ip address
 echo "IP Address info:" >> "$dir"
 ip a >> "$dir"
-echo "" >> "$dir"
+$space
 
 # Users list
 echo "Users list:" >> "$dir"
 cut -d: -f1 /etc/passwd >> "$dir"
-echo "" >> "$dir"
+$space
 
 # All apps installed
 echo "Apps and packages installed:" >> "$dir"
 sudo apt list --installed >> "$dir"
-echo "" >> "$dir"
+$space
 
 # CPU type, cores and RAM
 echo "CPU: " >> "$dir"
 sudo lshw -class CPU >> "$dir"
-echo "" >> "$dir"
+$space
 # Check for RAM command line
 echo "RAM:" >> "$dir"
 free -h >> "$dir"
-echo "" >> "$dir"
+$space
 
 # Open ports
 echo "Open ports:" >> "$dir"
 sudo netstat -tulnp >> "$dir"
-echo "" >> "$dir"
+$space
 
 # Firewall status
 echo "Firewall status" >> "$dir"
