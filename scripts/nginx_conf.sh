@@ -26,7 +26,7 @@ apt update
 
 # Install Nginx if not already installed
 echo "Installing Nginx ..."
-apt install -qqy apt-utils autoconf automake libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev certbot
+apt install -qqy gcc make build-essential autoconf automake libtool libpcre3-dev zlib1g-dev libssl-dev libxml2-dev libgeoip-dev libyajl-dev doxygen apt-utils libcurl4-openssl-dev liblmdb-dev libpcre++-dev pkgconf wget certbot
 echo -e "$install_date - Installation des packages pour Nginx et Modprobe realisee.\n" >> $dir
 
 # Mise en pause de Nginx pendant leur configuration / Stop Nginx and Apache2 before installing and setting up the config for modsecurity
@@ -35,9 +35,9 @@ systemctl stop nginx
 ##################################
 ########### Certbot  WIP ##############
 ##################################
-certbot certonly --manual --register-unsafely-without-email --preferred-challenges dns -d "*.$domaine" -d $domaine
+certbot certonly --manual --register-unsafely-without-email --agree-tos -n --preferred-challenges dns -d "*.$domaine" -d $domaine
 echo -e "$install_date - Certificat recupere.\n" >> $dir
-echo -e "\n" && read -p "\nFin install Certbot\n" && echo -e "\n"
+echo -e "\n" && read -p "Fin install Certbot" && echo -e "\n"
 
 # Configure Nginx
 echo "Configuring Nginx as a reverse proxy..."
@@ -61,17 +61,18 @@ server {
 }
 EOF
 echo -e "$install_date - Parametrage Nginx reverse proxy et preparation Modprobe.\n" >> $dir
-echo -e "\n" && read -p "\nFin modif conf Nginx\n" && echo -e "\n"
+echo -e "\n" && read -p "Fin modif conf Nginx" && echo -e "\n"
 
 # Recuperation et installation de ModSecurity
 rm -rf /usr/local/src/ModSecurity/
-git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/local/src/ModSecurity
+git clone --recurse-submodules https://github.com/SpiderLabs/ModSecurity /usr/local/src/ModSecurity
+git checkout v3/master
 cd /usr/local/src/ModSecurity/
-git submodule init
-git submodule update --remote
-echo -e "\n" && read -p "\nFin recup git Modsecurity\n" && echo -e "\n"
+#git submodule init
+#git submodule update --remote
+echo -e "\n" && read -p "Fin recup git Modsecurity" && echo -e "\n"
 ./build.sh
-echo -e "\n" && read -p "\nFin build.sh Modsecurity\n" && echo -e "\n"
+echo -e "\n" && read -p "Fin build.sh Modsecurity" && echo -e "\n"
 ./configure
 echo -e "\n" && read -p "\nFin configure.sh Modsecurity\n" && echo -e "\n"
 make
@@ -81,17 +82,19 @@ echo -e "\n" && read -p "\nFin make install Modsecurity\n" && echo -e "\n"
 
 # Module ModSecurity pour Nginx
 rm -rf /usr/local/src/ModSecurity-nginx
-git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src/ModSecurity-nginx
+git clone --recurse-submodules https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/local/src/ModSecurity-nginx
 cd /usr/local/src/ModSecurity-nginx
 echo -e "\n" && read -p "\nFin git clone Modsecurity-nginx\n" && echo -e "\n"
 nginx_vers=$(nginx -v 2>&1 | awk -F'/' '{print $2}' | awk -F' ' '{print $1}')
 wget http://nginx.org/download/nginx-$nginx_vers.tar.gz
 tar zxvf nginx-$nginx_vers.tar.gz
 cd nginx-$nginx_vers/
-./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
+./configure --with-compat --add-dynamic-module=/usr/local/src/ModSecurity-nginx
 make modules
 echo -e "\n" && read -p "\nFin make module Modsecurity-nginx\n" && echo -e "\n"
-cp /usr/local/src/ModSecurity-nginx/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules/
+cp /usr/local/src/ModSecurity-nginx/nginx-$nginx_vers/objs/ngx_http_modsecurity_module.so /etc/nginx/modules-available/
+echo "load_module modules/ngx_http_modsecurity_module.so;" > /usr/share/nginx/modules-available/mod-http-modsecurity.conf
+ln -s /usr/share/nginx/modules-available/mod-http-modsecurity.conf /etc/nginx/modules-enabled/
 echo -e "$install_date - Recuperation et compilation de Modprobe OK.\n" >> $dir
 echo -e "\n" && read -p "\nFin copie Modsecurity-nginx dans modules Nginx\n" && echo -e "\n"
 
@@ -122,7 +125,7 @@ echo -e "$install_date - Application des regles de securite de base OWASP.\n" >>
 echo -e "\n" && read -p "\nCopie regles OWASP\n" && echo -e "\n"
 
 #################################################################
-##### choix du site a surveiller/ liste d esceptions ajouter ####
+##### choix du site a surveiller/ liste d exceptions ajouter ####
 #################################################################
 
 # Restart services and enable Nginx
