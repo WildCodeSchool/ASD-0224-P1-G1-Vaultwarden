@@ -3,6 +3,7 @@
 # Mettre à jour et installer Apache2
 sudo apt update
 sudo apt purge -y nginx
+sudo apt autoremove -y
 sudo apt install -y apache2
 
 # Installer ModSecurity
@@ -14,16 +15,13 @@ sudo apt install -y modsecurity-crs
 # Vérifier si le répertoire /etc/modsecurity existe, sinon le créer
 sudo mkdir -p /etc/modsecurity
 
-# Copier les fichiers de configuration de base des règles OWASP CRS
-sudo cp /usr/share/modsecurity-crs/rules/*.conf /etc/modsecurity/crs/
-
 # Activer ModSecurity
 sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 
 # Inclure les règles OWASP CRS dans la configuration de sécurité Apache
 echo "
 IncludeOptional /etc/modsecurity/crs/crs-setup.conf
-IncludeOptional /etc/modsecurity/crs/*.conf
+IncludeOptional /usr/share/modsecurity-crs/rules/*.conf
 " | sudo tee -a /etc/apache2/mods-enabled/security2.conf
 
 # Créer un répertoire pour les certificats SSL
@@ -56,7 +54,7 @@ echo "
     <IfModule security2_module>
         SecRuleEngine On
         Include /etc/modsecurity/crs/crs-setup.conf
-        Include /etc/modsecurity/crs/*.conf
+        Include /usr/share/modsecurity-crs/rules/*.conf
     </IfModule>
 
 </VirtualHost>
