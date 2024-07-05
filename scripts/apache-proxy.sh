@@ -15,15 +15,14 @@ sudo apt install -y modsecurity-crs
 sudo mkdir -p /etc/modsecurity
 
 # Copier les fichiers de configuration de base des règles OWASP CRS
-sudo cp /usr/share/modsecurity-crs/crs-setup.conf.example /etc/modsecurity/crs-setup.conf
-sudo cp /usr/share/modsecurity-crs/rules/*.conf /etc/modsecurity/rules/
+sudo cp /usr/share/modsecurity-crs/rules/*.conf /etc/modsecurity/crs/
 
 # Activer ModSecurity
 sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 
 # Inclure les règles OWASP CRS dans la configuration de sécurité Apache
 echo "
-IncludeOptional /etc/modsecurity/crs-setup.conf
+IncludeOptional /etc/modsecurity/crs/crs-setup.conf
 IncludeOptional /etc/modsecurity/rules/*.conf
 " | sudo tee -a /etc/apache2/mods-enabled/security2.conf
 
