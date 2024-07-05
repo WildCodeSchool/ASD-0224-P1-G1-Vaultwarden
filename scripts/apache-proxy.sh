@@ -23,7 +23,7 @@ sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/m
 # Inclure les règles OWASP CRS dans la configuration de sécurité Apache
 echo "
 IncludeOptional /etc/modsecurity/crs/crs-setup.conf
-IncludeOptional /etc/modsecurity/rules/*.conf
+IncludeOptional /etc/modsecurity/crs/*.conf
 " | sudo tee -a /etc/apache2/mods-enabled/security2.conf
 
 # Créer un répertoire pour les certificats SSL
@@ -55,8 +55,8 @@ echo "
 
     <IfModule security2_module>
         SecRuleEngine On
-        Include /etc/modsecurity/crs-setup.conf
-        Include /etc/modsecurity/rules/*.conf
+        Include /etc/modsecurity/crs/crs-setup.conf
+        Include /etc/modsecurity/crs/*.conf
     </IfModule>
 
 </VirtualHost>
