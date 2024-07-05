@@ -7,7 +7,7 @@ YELLOW=$'\e[93m'
 BLUE=$'\e[34m'
 RESET=$'\e[0m'
 # Icons
-STEP="${YELLOW}[+]${RESET}"
+STEP_ICON="${YELLOW}[+]${RESET}"
 TIP="${GREEN}[!]${RESET}"
 CONCLUSION="${RED}[#]${RESET}"
 endc=$'\e[0m' #endc for end-color
@@ -38,7 +38,6 @@ STEP_TEXT=(
     "Changing root password"
     "Scheduling daily update download"
 )
-
 
 # REMOTE_COMMANDS=$(cat <<'EOF'
 
@@ -83,13 +82,12 @@ EOF
 }
 
 # Call the function to set up SSH key-based authentication
-
 echo "The virtualization platform used is : "
 systemd-detect-virt
 
 echo "List of steps that this script do : "
 for step in "${STEP_TEXT[@]}"; do
-    echo "${step}"
+    echo "$STEP_ICON ${step}"
 done
 
 # Check supported OSes
@@ -139,7 +137,7 @@ if [[ "$?" -eq 1 ]]; then
     echo "Skipping UFW config as it does not seem to be installed - check log to know more"
 else
     apt install ufw
-    "${STEP}" ufw added
+    "${STEP_ICON}" ufw added
 fi
 
 sys_upgrades() {
@@ -155,7 +153,7 @@ unattended_upg() {
     apt-get --yes --force-yes install unattended-upgrades
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
-
+    echo "$STEP_ICON unattended updates added"
     # This will create the file /etc/apt/apt.conf.d/20auto-upgrades
     # with the following contents:
     #############
@@ -168,23 +166,27 @@ disable_root() {
     passwd -l root
     # for any reason if you need to re-enable it:
     # sudo passwd -l root
+    echo "$STEP_ICON root disabled"
 }
 
 purge_telnet() {
     # Unless you need to specifically work with telnet, purge it
     # less layers = more sec
     apt-get --yes purge telnet
+    echo "$STEP_ICON telnet disabled"
 }
 
 purge_nfs() {
     # This the standard network file sharing for Unix/Linux/BSD     # Unless you require to share data in this manner,
     # less layers = more sec
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
+    echo "$STEP_ICON nfs disabled"
 }
 
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
+    echo "$STEP_ICON whoopsie disabled"
 }
 
 ### Verify if using ssh or openssh
@@ -192,11 +194,13 @@ harden_ssh_brute() {
     # Many attackers will try to use your SSH server to brute-force passwords.
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
+    echo "$STEP_ICON harden added ssh"
 }
 
-harden_ssh() {
-    sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
-}
+# harden_ssh() {
+#     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
+#     echo "$STEP_ICON harden added ssh"
+# }
 
 logwatch_reporter() {
     apt-get --yes --force-yes install logwatch
@@ -208,6 +212,7 @@ logwatch_reporter() {
 
 purge_atd() {
     apt-get --yes purge at
+    echo "$STEP_ICON purge atd"
     # less layers equals more security
 }
 
@@ -221,14 +226,14 @@ disable_avahi() {
     systemctl stop avahi-daaemon.service
     systemctl stop avahi-daemon.socket
     apt purge avahi-daemon
-    echo "avahi disabled" 
+    echo "$STEP_ICON avahi disabled"
 }
 
 # Common Unix Print System (CUPS) : this enables a system to function as a print server
 disable_cups() {
     apt purge cups
+    echo "$STEP_ICON cups disabled"
 }
-
 
 # Lightweight Directory Access Protocol (LDAP) Server
 # is an open and cross platform software protocol that is used for directory services authentication.
@@ -238,14 +243,15 @@ slap_disable() {
         echo "slapd is installed. Proceeding with removal."
         # Using apt-get purge to remove slapd and its configuration files
         sudo apt-get purge -y slapd
-        echo "slapd has been removed successfully."
+        echo "$STEP_ICON slapd has been removed successfully."
     else
-        echo "slapd is not installed. No action needed."
+        echo "$STEP_ICON slapd is not installed. No action needed."
     fi
 
     if ps aux | grep nfsd; then
     echo "NSF is installed in the computer"
     apt-get purge -y rpcbind
+    echo "$STEP_ICON rpcbind removed" 
     fi
 }
 
@@ -254,10 +260,9 @@ nfs_disable() {
     echo "NFS is installed in the machine"
     apt-get purge -y rpcbind
     else 
-    echo "NFS is not installed. No action needed."
+    echo "$STEP_ICON NFS is not installed. No action needed."
     fi
 }
-
 
 process_accounting() {
     # Linux process accounting keeps track of all sorts of details about which commands have been run on the server, who ran them, when, etc.
@@ -273,7 +278,6 @@ process_accounting() {
     lastcomm
     # To show users' connect times, run ac. To show information about commands previously run by users, run sa. To see the last commands run, run lastcomm.
 }
-
 
 #### Verify what do that part in details 
 #### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
@@ -330,8 +334,6 @@ process_accounting() {
 #     net.ipv4.conf.all.log_martians = 1
 # }
 
-
-
 ##############
 
 # new_port=2269
@@ -357,11 +359,11 @@ disable_compilers() {
     chmod 000 /usr/bin/gcc
     chmod 000 /usr/bin/*c++
     chmod 000 /usr/bin/*g++
+    echo "$STEP_ICON  differents compilers disabled" 
     # 755 to bring them back online
     # It is better to restrict access to them
     # unless you are working with a specific one
 }
-
 
 # Verify what port allow and disallow, can be improved
 # firewall_setup() {
@@ -371,7 +373,6 @@ disable_compilers() {
 #     ufw default deny
 #     ufw enable
 # }
-
 
 # List of packages that are considered insecure and should be removed
 ### List that come from https://freelinuxtutorials.com/top-15-services-to-remove-for-securing-ubuntu-linux/
@@ -398,25 +399,30 @@ purge_useless_packages() {
         if ps aux | grep -v grep | grep -w "${appli}" > /dev/null; then
             echo "Using ps: $appli is Running"
             sudo apt-get purge -y "$appli"
+            echo "$STEP_ICON  $appli removed" 
+
         else
-            echo "Using ps: $appli is Not running"
+            echo "$STEP_ICON Using ps: $appli is Not running"
         fi
     done
 }
+
+
+##### Checking security module in place 
 
 # AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles.
 # Check if apparmor is installed command is available
 check_apparmor() {
     if command -v apparmor_status >/dev/null 2>&1; then
-        echo "AppArmor is installed."
+        echo "$STEP_ICON AppArmor already installed."
         # Execute apparmor_status with sudo and pipe to grep to check for active profiles
         if apparmor_status | grep -q "profiles are loaded."; then
-            echo "AppArmor is active."
+            echo "$STEP_ICON AppArmor is active."
         else
-            echo "AppArmor is installed but not active or not functioning correctly."
+            echo "$STEP_ICON AppArmor already installed but not active or not functioning correctly."
         fi
     else
-        echo "AppArmor is not installed."
+        echo "$STEP_ICON AppArmor is not installed."
     fi
 }
 
@@ -425,11 +431,11 @@ check_apparmor() {
 # Function to check if SELinux is installed
 check_selinux() {
     if command -v getenforce >/dev/null 2>&1; then
-        echo "SELinux is installed."
+        echo "$STEP_ICON SELinux already installed."
         # Check if SELinux is enforcing, permissive, or disabled
-        echo "SELinux status: $(getenforce)"
+        echo "$STEP_ICON SELinux status: $(getenforce)"
     else
-        echo "SELinux is not installed."
+        echo "$STEP_ICON SELinux is not installed."
     fi
 }
 
@@ -439,17 +445,16 @@ check_selinux
 
 harden_sshd_config() {
     CINTERVAL="10m"
-
     echo "Differents variables choosen :"
     echo "Port to $PORT" 
-    echo "MaxAuthTries to 5"
-    echo "LogLevel to LogLevel"
 
     # Ensure the script is run as root
     if [[ $EUID -ne 0 ]]; then
         echo "This script must be run as root" 1>&2
         exit 1
     fi
+
+########################################################## SSH_CLIENT config
 
     settings_ssh=(
         [ForwardAgent]="yes"
@@ -484,7 +489,7 @@ harden_sshd_config() {
         #   HashKnownHosts yes
         #   GSSAPIAuthentication yes
     )
-
+########################################################## SSH_DAEMON config
         settings_ssh_daemon=(
         [Port]="$PORT"
         #AddressFamily any
