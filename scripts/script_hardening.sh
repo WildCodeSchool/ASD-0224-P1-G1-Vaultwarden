@@ -484,8 +484,8 @@ harden_sshd_config() {
         #   Ciphers aes128-ctr,aes192-c
         #   MACs hmac-md5,hmac-sha1,uma
         #   EscapeChar ~
-            [Tunnel]="no"
-            [TunnelDevice]="any:any"
+        [Tunnel]="no"
+        [TunnelDevice]="any:any"
         #   PermitLocalCommand no
         #   VisualHostKey no
         #   ProxyCommand ssh -q -W %h:%
@@ -643,7 +643,6 @@ harden_sshd_config() {
     done
 }
 
-
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
    echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
@@ -737,7 +736,6 @@ main() {
 main "$@"
 
 purge_useless_packages
-
 
 set_chkrootkit() {
     apt-get --yes install chkrootkit
