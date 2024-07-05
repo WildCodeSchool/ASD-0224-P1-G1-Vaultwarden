@@ -2,22 +2,26 @@
 
 # Mettre à jour et installer Apache2
 sudo apt update
+sudo apt purge -y nginx
 sudo apt install -y apache2
 
 # Installer ModSecurity
 sudo apt install -y libapache2-mod-security2
 
-# Installer les règles OWASP
+# Installer les règles OWASP CRS
 sudo apt install -y modsecurity-crs
 
-# Copier les fichiers de configuration de base des règles OWASP
+# Vérifier si le répertoire /etc/modsecurity existe, sinon le créer
+sudo mkdir -p /etc/modsecurity
+
+# Copier les fichiers de configuration de base des règles OWASP CRS
 sudo cp /usr/share/modsecurity-crs/crs-setup.conf.example /etc/modsecurity/crs-setup.conf
 sudo cp /usr/share/modsecurity-crs/rules/*.conf /etc/modsecurity/rules/
 
 # Activer ModSecurity
 sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 
-# Inclure les règles OWASP dans la configuration de sécurité Apache
+# Inclure les règles OWASP CRS dans la configuration de sécurité Apache
 echo "
 IncludeOptional /etc/modsecurity/crs-setup.conf
 IncludeOptional /etc/modsecurity/rules/*.conf
