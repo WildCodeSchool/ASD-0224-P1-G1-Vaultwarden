@@ -208,6 +208,7 @@ logwatch_reporter() {
     cd /
     mv /etc/cron.daily/00logwatch /etc/cron.weekly/
     cd
+    echo "$STEP_ICON logwatch installed with cronjob"
 }
 
 purge_atd() {
@@ -256,11 +257,14 @@ slap_disable() {
 }
 
 nfs_disable() {
-    if ps aux | grep nfs-kernel-server; then
-    echo "NFS is installed in the machine"
-    apt-get purge -y rpcbind
-    else 
-    echo "$STEP_ICON NFS is not installed. No action needed."
+    read -p "Do you want to disable NFS ?" nfs_disabling
+    if [[ "$nfs_disabling" == "y" ]]; then
+        if ps aux | grep nfs-kernel-server; then
+        echo "NFS is installed in the machine"
+        systemctl disable nfs-kernel-server
+        else 
+        echo "$STEP_ICON NFS is not installed. No action needed."
+        fi
     fi
 }
 
@@ -726,6 +730,7 @@ main() {
     purge_atd
     disable_avahi
     disable_cups
+    slap_disable
     disable_compilers
     firewall_setup
     harden_sshd_config
@@ -733,7 +738,6 @@ main() {
     setup_ssh_ed25519
     # kernel_tuning
     # Created by me, need to verify if to preserver or not
-    slap_disable
     nfs_disable
     set_chkrootkit
 }
