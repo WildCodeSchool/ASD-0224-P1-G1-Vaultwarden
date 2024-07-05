@@ -608,8 +608,6 @@ harden_sshd_config() {
         # ChallengeResponseAuthentication # Don't know if usefull or not
     )
 
-   
- 
   update_config_file() {
         local file=$1
         local setting=$2
@@ -645,8 +643,6 @@ harden_sshd_config() {
 }
 
 
-
-
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation
    echo "Kerberos is a computer-network authentication protocol that works on the basis of tickets to allow nodes communicating over a non-secure network to prove their identity to one another in a secure manner."
@@ -658,40 +654,35 @@ kerberos_setup_sshd() {
     echo "KerberosGetAFSToken no" >>"$SSHD_CONFIG"
 
     if [[ "$kerberos_response" == "y" ]]; then
-        echo "Disabling Kerberos Authentification in sshd_config..."
+        echo "$STEP_ICON Disabling Kerberos Authentification in sshd_config..."
 
     if grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
-        echo "KerberosOrLocalPassword is already set to NO."
+        echo "$STEP_ICON KerberosOrLocalPassword is already set to NO."
     else
         # Replace or uncomment DebianBanner setting
         sed -i '/^#*KerberosAuthentication /c\KerberosAuthentication no' "$SSHD_CONFIG"
         if ! grep -q "^KerberosAuthentication no" "$SSHD_CONFIG"; then
-            echo "KerberosAuthentication no" >> "$SSHD_CONFIG"
+            echo "$STEP_ICON KerberosAuthentication no" >> "$SSHD_CONFIG"
         fi
-        echo "KerberosAuthentication set to no"
+        echo "$STEP_ICON KerberosAuthentication set to no"
     fi
 
     if grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
-        echo "KerberosOrLocalPassword is already set to NO."
+        echo "$STEP_ICON KerberosOrLocalPassword is already set to NO."
     else
         # Replace or uncomment DebianBanner setting
         sed -i '/^#*KerberosOrLocalPassword /c\KerberosOrLocalPassword no' "$SSHD_CONFIG"
         if ! grep -q "^KerberosOrLocalPassword no" "$SSHD_CONFIG"; then
-            echo "KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
+            echo "$STEP_ICON KerberosOrLocalPassword no" >> "$SSHD_CONFIG"
         fi
-        echo "KerberosOrLocalPassword set to no"
+        echo "$STEP_ICON KerberosOrLocalPassword set to no"
     fi
-    
 
     elif [[ "$kerberos_response" == "n" ]]; then
-        echo "Kerberos authentification has not been disabled."
+        echo "$STEP_ICON Kerberos authentification has not been disabled."
     else
-        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+        echo "$STEP_ICON Invalid input. Please enter 'y' for yes or 'n' for no."
     fi
-
-
-
-
 }
 
 # UPnP (Universal Plug and Play)
@@ -708,11 +699,11 @@ upnp_desactivation() {
     if [[ "$upnp_response" == "y" ]]; then
         echo "Disabling UPnP..."
         ufw deny proto udp from any to any port 1900
-        echo "UPnP has been disabled."
+        echo "$STEP_ICON UPnP has been disabled."
     elif [[ "$upnp_response" == "n" ]]; then
-        echo "UPnP has not been disabled."
+        echo "$STEP_ICON UPnP has not been disabled."
     else
-        echo "Invalid input. Please enter 'y' for yes or 'n' for no."
+        echo "$STEP_ICON Invalid input. Please enter 'y' for yes or 'n' for no."
     fi
 }
 
