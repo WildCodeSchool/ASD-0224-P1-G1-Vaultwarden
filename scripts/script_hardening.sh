@@ -326,15 +326,23 @@ packages=(
     "nis" #  Network Information Service (NIS) is a client-server directory service protocol used for distributing system configuration files. It is formally known as Yellow Pages.
     "squid" # HTTP Proxy Server it is a server application that acts as an intermediary for clients requests seeking resources from servers. It can cache data to speed up common HTTP requests. The standard proxy server used in many distributions is the “Squid”.
     "snmpd" #  SNMP is a network-management protocol that is used to monitor network devices, collect statistics and performance.
+    
+    #### Probably add also below,  ### but verify what it do
+    # "rsh-redone-server"
+    # "yp-tools"
+    # "xinetd" 
+    # "nis"  
+    # "tftpd" 
+    # "atftpd" 
+    # "tftpd-hpa" 
 )
-# Check also for the following below :
-# xinetd nis yp-tools tftpd atftpd tftpd-hpa  rsh-redone-server
 
 purge_useless_packages() {
     for appli in "${packages[@]}"; do
         if ps aux | grep -v grep | grep -w "${appli}" > /dev/null; then
             echo "Using ps: $appli is Running"
             sudo apt-get purge -y "$appli"
+            sudo apt-get --purge remove -y "$appli"
             echo "$STEP_ICON  $appli removed" 
 
         else
@@ -642,6 +650,57 @@ set_chkrootkit() {
     chkrootkit
 }
 
+##### firewall implementation
+set_ufw() {
+    # Check if UFW is installed, if not, install it
+    if ! command -v ufw &> /dev/null
+    then
+        echo "UFW is not installed. Installing UFW..."
+        sudo apt-get update
+        sudo apt-get install ufw -y
+    fi
+    # Enable UFW
+    echo "Enabling UFW..."
+    sudo ufw enable
+
+    # Declare an array of ports to allow
+    declare -i port_list=(
+        80
+        8080
+        443
+        1754
+    )
+
+    # Allow connections on the specified ports
+    for port in "${port_list[@]}"
+    do
+        echo "Allowing connections on port $port..."
+        sudo ufw allow $port/tcp
+    done
+
+    # Show UFW status
+    echo "Showing UFW status..."
+    sudo ufw status verbose
+
+    echo "UFW has been configured and is running."
+}
+
+# Intrusion prevention software framework
+set_fail2ban() {
+    apt install fail2ban
+    echo "[ssh-ddos]" > /etc/fail2ban/jail.local 
+    echo "enabled = true" >> /etc/fail2ban/jail.local
+    ## If need to copy paste
+    # [ssh-ddos]
+    # enabled = true
+    /etc/init.d/fail2ban restart
+    service ssh restart
+}
+
+future_implementations() {
+    echo -e "Future implementation can be added in the future : ClamAv, Crowdsec, etc... \n Hardening can still be improved"
+}
+
 main() {
     # setup_ssh_ed25519
     sys_upgrades
@@ -666,12 +725,15 @@ main() {
     kerberos_setup_sshd
     upnp_desactivation
     # kernel_tuning
+    set_ufw
+    set_fail2ban
     set_chkrootkit
+    future_implementations
 }
 
 main "$@"
 
-
+echo "Test that ssh connexion stil work with the new port : "${PORT}""
 
 
 #### Verify what do that part in details 
@@ -731,19 +793,7 @@ main "$@"
 
 ##############
 
-# new_port=2269
-# port modification
-#nano /etc/ssh/sshd_config
-### modification in this line to modify port
-#service ssh restart
-#echo "Test that ssh connexion stil work with the new port : "${new_port}""
 
-##### firewall implementation
-#sudo apt install fail2ban
-#sudo nano /etc/fail2ban/jail.local
-
-#### Adapt  [ssh-ddos] part to "enabled = true"
-#/etc/init.d/fail2ban restart
 
 
 

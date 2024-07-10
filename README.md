@@ -17,9 +17,11 @@ The objective of the project is to automate the installation process of Vaultwar
 
 
 #### Information 
-In the hardening file the default SSH connexion Port will be set to 1754 with an variable. That variable can be modified.
+In the hardening file, the default SSH connection port will be set to 1754 using a variable. Or set the port in the script to your current Port.
+We advise choosing an SSH port above 1000 because some port scan scripts do not scan ports over 1000. Port 1754 has been chosen for this reason.After remember to note the new SSH port.
+
 Please take note of that, before run the script. To adapt your future connexions and other scripts using SSH. Notify other peoples.
-Or set the port in the script to your current Port 
+
 PORT=1754
 
 ## Developpement 
