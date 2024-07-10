@@ -26,9 +26,7 @@ LoadModule security2_module modules/mod_security2.so
 <IfModule security2_module>
 
         Include /etc/modsecurity/crs/crs-setup.conf
-        IncludeOptional /usr/share/modsecurity-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
         Include /usr/share/modsecurity-crs/rules/*.conf
-        IncludeOptional /usr/share/modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 
 </IfModule>
 " | sudo tee -a /etc/apache2/mods-enabled/security2.conf

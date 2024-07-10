@@ -29,4 +29,16 @@ PORT=1754
 In the hardening scripts, there is a section that can be commented out to facilitate easier development with syntax highlighting in Visual Studio Code.
 When you are developing, you can comment out the "REMOTE_COMMANDS" block at the top and at the bottom of the script. This allows you to leverage the full syntax highlighting and code editing features of your IDE.
 Do ctrl + f "REMOTE_COMMANDS" to find them
-# Automating deployment and installation of Vaultwarden
+
+## Automating deployment and installation of Vaultwarden
+
+## Application hardening
+The choosen solution for software hardening is ModSecurity.
+The WAF is installed as a module for Apache.
+
+To help further the filtering, OWASP rulesets have been implemented.
+List of enabled rules can be found in :
+- /usr/share/modsecurity-crs/rules/*.conf
+- /etc/modsecurity/crs/crs-setup.conf
+
+With these filters enabled, the apache service is setup as a proxy and will play it's role as a WAF.
