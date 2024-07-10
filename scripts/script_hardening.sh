@@ -690,23 +690,49 @@ set_ufw() {
 
 # Intrusion prevention software framework
 set_fail2ban() {
-    apt install fail2ban
-    echo "[ssh-ddos]" > /etc/fail2ban/jail.local 
-    echo "enabled = true" >> /etc/fail2ban/jail.local
-    ## If need to copy paste
-    # [ssh-ddos]
-    # enabled = true
-    /etc/init.d/fail2ban restart
-    service ssh restart
+    # Install fail2ban if not already installed
+    if ! dpkg -l | grep -qw fail2ban; then
+        echo "Installing fail2ban..."
+        apt-get update
+        apt-get install -y fail2ban
+    else
+        echo "fail2ban is already installed."
+    fi
 
+    # Check if jail.local needs to be created or appended
+    if [ ! -f /etc/fail2ban/jail.local ]; then
+        echo "Creating /etc/fail2ban/jail.local with ssh-ddos jail..."
+        echo "[ssh-ddos]" > /etc/fail2ban/jail.local
+        echo "enabled = true" >> /etc/fail2ban/jail.local
+        echo "port = ssh" >> /etc/fail2ban/jail.local
+        echo "filter = sshd" >> /etc/fail2ban/jail.local
+        echo "logpath = /var/log/auth.log" >> /etc/fail2ban/jail.local
+        echo "maxretry = 6" >> /etc/fail2ban/jail.local
+    else
+        echo "/etc/fail2ban/jail.local already exists. Appending configuration for ssh-ddos..."
+        grep -q "[ssh-ddos]" /etc/fail2ban/jail.local || {
+            echo "[ssh-ddos]" >> /etc/fail2ban/jail.local
+            echo "enabled = true" >> /etc/fail2ban/jail.local
+            echo "port = ssh" >> /etc/fail2ban/jail.local
+            echo "filter = sshd" >> /etc/fail2ban/jail.local
+            echo "logpath = /var/log/auth.log" >> /etc/fail2ban/jail.local
+            echo "maxretry = 6" >> /etc/fail2ban/jail.local
+        }
+    fi
+
+    # Restart fail2ban to apply changes
+    echo "Restarting fail2ban service..."
+    systemctl restart fail2ban
+
+    # Restart SSH service
+    echo "Restarting SSH service..."
+    systemctl restart ssh
 
     # Check if fail2ban is installed and running
-    sudo systemctl status fail2ban
+    systemctl status fail2ban --no-pager
 
-    # If not running, try starting it
-    sudo systemctl start fail2ban
-
-    # Check the log again for errors
+    # Check the log for errors
+    echo "Checking fail2ban log for errors..."
     cat /var/log/fail2ban.log
 }
 
