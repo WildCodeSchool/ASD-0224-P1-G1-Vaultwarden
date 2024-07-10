@@ -56,35 +56,35 @@ STEP_TEXT=(
     "Scheduling daily update download"
 )
 
-# REMOTE_COMMANDS=$(cat <<'EOF'
-# Function to set up SSH key-based authentication using Ed25519
-setup_ssh_ed25519() {
-    if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
-        echo "Missing required variables: remote_user, remote_host, or email."
-        return 1
-    fi
+# # REMOTE_COMMANDS=$(cat <<'EOF'
+# # Function to set up SSH key-based authentication using Ed25519
+# setup_ssh_ed25519() {
+#     if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
+#         echo "Missing required variables: remote_user, remote_host, or email."
+#         return 1
+#     fi
 
-    # Generate Ed25519 key
-    ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
+#     # Generate Ed25519 key
+#     ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
 
-    # Automatically copy the Ed25519 key to the server
-    ssh-copy-id -i $SSH_KEY_PUB_PATH -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
+#     # Automatically copy the Ed25519 key to the server
+#     ssh-copy-id -i $SSH_KEY_PUB_PATH -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
 
-    # SSH into the server to harden SSH configuration
-    ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
+#     # SSH into the server to harden SSH configuration
+#     ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
 
-        # Restart SSH service
-        sudo systemctl restart sshd
+#         # Restart SSH service
+#         sudo systemctl restart sshd
 
-        echo "$STEP_ICON SSH configuration restarted."
-EOF
+#         echo "$STEP_ICON SSH configuration restarted."
+# EOF
 
-    cd ~/.ssh
-    sudo ssh-agent bash
-    ssh-add $SSH_KEY_PATH
+#     cd ~/.ssh
+#     sudo ssh-agent bash
+#     ssh-add $SSH_KEY_PATH
 
-    echo "$STEP_ICON SSH key-based authentication setup using $SSH_PRE_PATH is complete."
-}
+#     echo "$STEP_ICON SSH key-based authentication setup using $SSH_PRE_PATH is complete."
+# }
 
 # Call the function to set up SSH key-based authentication
 echo "$STEP_ICON The virtualization platform used is : "
@@ -202,10 +202,6 @@ harden_ssh_brute() {
     echo "$STEP_ICON harden added ssh"
 }
 
-# harden_ssh() {
-#     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
-#     echo "$STEP_ICON harden added ssh"
-# }
 
 logwatch_reporter() {
     apt-get --yes --force-yes install logwatch
@@ -380,8 +376,7 @@ check_selinux() {
 }
 
 # Perform the checks
-check_apparmor
-check_selinux
+
 
 harden_sshd_config() {
     CINTERVAL="10m"
@@ -642,7 +637,13 @@ upnp_desactivation() {
     fi
 }
 
+set_chkrootkit() {
+    apt-get --yes install chkrootkit
+    chkrootkit
+}
+
 main() {
+    # setup_ssh_ed25519
     sys_upgrades
     unattended_upg
     disable_root
@@ -650,32 +651,25 @@ main() {
     purge_nfs
     purge_whoopsie
     harden_ssh_brute
-    harden_ssh
     logwatch_reporter
-    process_accounting
     purge_atd
     disable_avahi
     disable_cups
     slap_disable
+    process_accounting
     disable_compilers
-    firewall_setup
+    # firewall_setup
+    purge_useless_packages
+    check_apparmor
+    check_selinux
     harden_sshd_config
+    kerberos_setup_sshd
     upnp_desactivation
-    setup_ssh_ed25519
     # kernel_tuning
-    # Created by me, need to verify if to preserver or not
-    nfs_disable
     set_chkrootkit
 }
 
 main "$@"
-
-purge_useless_packages
-
-set_chkrootkit() {
-    apt-get --yes install chkrootkit
-    chkrootkit
-}
 
 
 
