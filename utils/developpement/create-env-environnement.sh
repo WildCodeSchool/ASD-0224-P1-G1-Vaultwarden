@@ -17,6 +17,7 @@ cat <<EOF > reset_script.sh
 #! /bin/bash
 cp $workspace/sshd_config_bakcup /etc/ssh/sshd_config 
 cp $workspace/ssh_config_bakcup /etc/ssh/ssh_config 
+echo " " > developpement-script.sh
 EOF
 
 chmod +x reset_script.sh

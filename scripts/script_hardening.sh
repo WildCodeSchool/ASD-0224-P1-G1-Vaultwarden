@@ -563,14 +563,7 @@ set_ufw() {
     # Enable UFW
 
     echo "Enabling UFW..."
-    sudo ufw enable
-    "${STEP_ICON}" ufw enabmed
-
-    # Declare an array of ports to allow
-    declare -i port_list=(
-        80
-        8080
-        443
+    sudo ufw enabledeve
         1754
     )
 
