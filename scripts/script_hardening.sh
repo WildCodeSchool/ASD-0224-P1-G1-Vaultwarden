@@ -199,7 +199,7 @@ harden_ssh_brute() {
     # Many attackers will try to use your SSH server to brute-force passwords.
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
-    echo "$STEP_ICON harden added ssh"
+    echo "$STEP_ICON ssh hardening added with rate limiting"
 }
 
 
@@ -258,8 +258,8 @@ slap_disable() {
 }
 
 nfs_disable() {
-    read -p "Do you want to disable NFS ?" nfs_disabling
-    if [[ "$nfs_disabling" == "y" ]]; then
+    read -p "Do you want to disable NFS  (y/n) ?" nfs_disabling
+    if [[ "$nfs_disabling" == "y | yes" ]]; then
         if ps aux | grep nfs-kernel-server; then
         echo "NFS is installed in the machine"
         systemctl disable nfs-kernel-server
