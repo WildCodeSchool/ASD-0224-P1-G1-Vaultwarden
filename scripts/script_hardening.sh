@@ -1,6 +1,4 @@
 #!/bin/bash
-
-echo "script started"
 RED=$'\e[31m'
 GREEN=$'\e[32m'
 YELLOW=$'\e[93m'
@@ -13,17 +11,36 @@ CONCLUSION="${RED}[#]${RESET}"
 endc=$'\e[0m' #endc for end-color
 
 # Define the remote server credentials
+SSH_CONFIG="/etc/ssh/ssh_config"  
+SSHD_CONFIG="/etc/ssh/sshd_config"  
+
+#### Variable for testing 
+REMOTE_USER="root"
+EMAIL="root@gmail.com"
+REMOTE_HOST="your_remote_host"
+REMOTE_PORT="22" # Default SSH port, change if necessary
+declare -i PORT=1754
 REMOTE_USER="your_remote_username"
 REMOTE_HOST="your_remote_host"
 REMOTE_PORT="22" # Default SSH port, change if necessary
 SSH_KEY="/path/to/your/private/key"
+# SSH_declare -i PORT=1754
 
-SSH_CONFIG="/etc/ssh/ssh_config"  
-SSHD_CONFIG="/etc/ssh/sshd_config"  
-declare -i PORT=1754
+SSH_PRE_PATH="~/.ssh/id_ed25519"
+SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
+SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
 
-read -p "Enter the name of your remote server: " SERVER_NAME
-read -p "What is the SSH port number on the remote server? " SSH_PORT
+#### Variable for production
+# read -p "What is your email address ? " EMAIL
+# read -p "What is your server name ? " SERVER_NAME
+# read -p "Enter the name of your remote server: " SERVER_NAME
+# read -p "What is the SSH port number on the remote server? " SSH_PORT
+
+# read -p "What is your remote username? " REMOTE_USER
+# read -p "What is the remote host name ? " REMOTE_HOST
+# read -p "What is the SSH port number on the remote server ? " REMOTE_PORT
+# read -p "What is the SSH port number on the remote server ? " SSH_PORT
+# ##  read -p " What is the remote ssh_key path on your local machine ?" SSH_KEY ### Already set with static variable
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -39,47 +56,35 @@ STEP_TEXT=(
     "Scheduling daily update download"
 )
 
-# REMOTE_COMMANDS=$(cat <<'EOF'
+# # REMOTE_COMMANDS=$(cat <<'EOF'
+# # Function to set up SSH key-based authentication using Ed25519
+# setup_ssh_ed25519() {
+#     if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
+#         echo "Missing required variables: remote_user, remote_host, or email."
+#         return 1
+#     fi
 
-##### Variables that can be modified
+#     # Generate Ed25519 key
+#     ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
 
-# REMOTE_USER="your_remote_username"
-# REMOTE_HOST="your_remote_host"
-# REMOTE_PORT="22" # Default SSH port, change if necessary
-# SSH_KEY="/path/to/your/private/key"
-# EMAIL="your_email@example.com"
+#     # Automatically copy the Ed25519 key to the server
+#     ssh-copy-id -i $SSH_KEY_PUB_PATH -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
 
-SSH_PRE_PATH="~/.ssh/id_ed25519"
-SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
+#     # SSH into the server to harden SSH configuration
+#     ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
 
-# Function to set up SSH key-based authentication using Ed25519
-setup_ssh_ed25519() {
-    if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
-        echo "Missing required variables: remote_user, remote_host, or email."
-        return 1
-    fi
+#         # Restart SSH service
+#         sudo systemctl restart sshd
 
-    # Generate Ed25519 key
-    ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
+#         echo "$STEP_ICON SSH configuration restarted."
+# EOF
 
-    # Automatically copy the Ed25519 key to the server
-    ssh-copy-id -i ~/.ssh/id_ed25519_$SERVER_NAME.pub -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
+#     cd ~/.ssh
+#     sudo ssh-agent bash
+#     ssh-add $SSH_KEY_PATH
 
-    # SSH into the server to harden SSH configuration
-    ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
-
-        # Restart SSH service
-        sudo systemctl restart sshd
-
-        echo "$STEP_ICON SSH configuration restarted."
-EOF
-
-    cd ~/.ssh
-    sudo ssh-agent bash
-    ssh-add $SSH_KEY_PATH
-
-    echo "$STEP_ICON SSH key-based authentication setup using $SSH_PRE_PATH is complete."
-}
+#     echo "$STEP_ICON SSH key-based authentication setup using $SSH_PRE_PATH is complete."
+# }
 
 # Call the function to set up SSH key-based authentication
 echo "$STEP_ICON The virtualization platform used is : "
@@ -194,13 +199,9 @@ harden_ssh_brute() {
     # Many attackers will try to use your SSH server to brute-force passwords.
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
-    echo "$STEP_ICON harden added ssh"
+    echo "$STEP_ICON ssh hardening added with rate limiting"
 }
 
-# harden_ssh() {
-#     sudo sh -c 'echo "PermitRootLogin no" >> /etc/ssh/ssh_config'
-#     echo "$STEP_ICON harden added ssh"
-# }
 
 logwatch_reporter() {
     apt-get --yes --force-yes install logwatch
@@ -257,8 +258,8 @@ slap_disable() {
 }
 
 nfs_disable() {
-    read -p "Do you want to disable NFS ?" nfs_disabling
-    if [[ "$nfs_disabling" == "y" ]]; then
+    read -p "Do you want to disable NFS  (y/n) ?" nfs_disabling
+    if [[ "$nfs_disabling" == "y | yes" ]]; then
         if ps aux | grep nfs-kernel-server; then
         echo "NFS is installed in the machine"
         systemctl disable nfs-kernel-server
@@ -284,76 +285,6 @@ process_accounting() {
     # To show users' connect times, run ac. To show information about commands previously run by users, run sa. To see the last commands run, run lastcomm.
 }
 
-#### Verify what do that part in details 
-#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
-# kernel_tuning() {
-#     sysctl kernel.randomize_va_space=1
-
-#     # Enable IP spoofing protection
-#     sysctl net.ipv4.conf.all.rp_filter=1
-
-#     # Disable IP source routing
-#     sysctl net.ipv4.conf.all.accept_source_route=0
-
-#     # Ignoring broadcasts request
-#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
-
-#     # Make sure spoofed packets get logged
-#     sysctl net.ipv4.conf.all.log_martians=1
-#     sysctl net.ipv4.conf.default.log_martians=1
-
-#     # Disable ICMP routing redirects
-#     sysctl -w net.ipv4.conf.all.accept_redirects=0
-#     sysctl -w net.ipv6.conf.all.accept_redirects=0
-#     sysctl -w net.ipv4.conf.all.send_redirects=0
-
-#     # Disables the magic-sysrq key
-#     sysctl kernel.sysrq=0
-
-#     # Turn off the tcp_timestamps
-#     sysctl net.ipv4.tcp_timestamps=0
-
-#     # Enable TCP SYN Cookie Protection
-#     sysctl net.ipv4.tcp_syncookies=1
-
-#     # Enable bad error message Protection
-#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
-
-#     # RELOAD WITH NEW SETTINGS
-#     sysctl -p
-# }
-
-#### Verify what do that part in details 
-# second_kernel_tunning () {
-#     # Turn on execshield
-#     kernel.exec-shield=1
-#     kernel.randomize_va_space=1
-#     # Enable IP spoofing protection
-#     net.ipv4.conf.all.rp_filter=1
-#     # Disable IP source routing
-#     net.ipv4.conf.all.accept_source_route=0
-#     # Ignoring broadcasts request
-#     net.ipv4.icmp_echo_ignore_broadcasts=1
-#     net.ipv4.icmp_ignore_bogus_error_messages=1
-#     # Make sure spoofed packets get logged
-#     net.ipv4.conf.all.log_martians = 1
-# }
-
-##############
-
-# new_port=2269
-# port modification
-#nano /etc/ssh/sshd_config
-### modification in this line to modify port
-#service ssh restart
-#echo "Test that ssh connexion stil work with the new port : "${new_port}""
-
-##### firewall implementation
-#sudo apt install fail2ban
-#sudo nano /etc/fail2ban/jail.local
-
-#### Adapt  [ssh-ddos] part to "enabled = true"
-#/etc/init.d/fail2ban restart
 
 disable_compilers() {
     chmod 000 /usr/bin/byacc
@@ -445,8 +376,7 @@ check_selinux() {
 }
 
 # Perform the checks
-check_apparmor
-check_selinux
+
 
 harden_sshd_config() {
     CINTERVAL="10m"
@@ -707,7 +637,13 @@ upnp_desactivation() {
     fi
 }
 
+set_chkrootkit() {
+    apt-get --yes install chkrootkit
+    chkrootkit
+}
+
 main() {
+    # setup_ssh_ed25519
     sys_upgrades
     unattended_upg
     disable_root
@@ -715,32 +651,102 @@ main() {
     purge_nfs
     purge_whoopsie
     harden_ssh_brute
-    harden_ssh
     logwatch_reporter
-    process_accounting
     purge_atd
     disable_avahi
     disable_cups
     slap_disable
+    process_accounting
     disable_compilers
-    firewall_setup
+    # firewall_setup
+    purge_useless_packages
+    check_apparmor
+    check_selinux
     harden_sshd_config
+    kerberos_setup_sshd
     upnp_desactivation
-    setup_ssh_ed25519
     # kernel_tuning
-    # Created by me, need to verify if to preserver or not
-    nfs_disable
     set_chkrootkit
 }
 
 main "$@"
 
-purge_useless_packages
 
-set_chkrootkit() {
-    apt-get --yes install chkrootkit
-    chkrootkit
-}
+
+
+#### Verify what do that part in details 
+#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
+# kernel_tuning() {
+#     sysctl kernel.randomize_va_space=1
+
+#     # Enable IP spoofing protection
+#     sysctl net.ipv4.conf.all.rp_filter=1
+
+#     # Disable IP source routing
+#     sysctl net.ipv4.conf.all.accept_source_route=0
+
+#     # Ignoring broadcasts request
+#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
+
+#     # Make sure spoofed packets get logged
+#     sysctl net.ipv4.conf.all.log_martians=1
+#     sysctl net.ipv4.conf.default.log_martians=1
+
+#     # Disable ICMP routing redirects
+#     sysctl -w net.ipv4.conf.all.accept_redirects=0
+#     sysctl -w net.ipv6.conf.all.accept_redirects=0
+#     sysctl -w net.ipv4.conf.all.send_redirects=0
+
+#     # Disables the magic-sysrq key
+#     sysctl kernel.sysrq=0
+
+#     # Turn off the tcp_timestamps
+#     sysctl net.ipv4.tcp_timestamps=0
+
+#     # Enable TCP SYN Cookie Protection
+#     sysctl net.ipv4.tcp_syncookies=1
+
+#     # Enable bad error message Protection
+#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
+
+#     # RELOAD WITH NEW SETTINGS
+#     sysctl -p
+# }
+
+#### Verify what do that part in details 
+# second_kernel_tunning () {
+#     # Turn on execshield
+#     kernel.exec-shield=1
+#     kernel.randomize_va_space=1
+#     # Enable IP spoofing protection
+#     net.ipv4.conf.all.rp_filter=1
+#     # Disable IP source routing
+#     net.ipv4.conf.all.accept_source_route=0
+#     # Ignoring broadcasts request
+#     net.ipv4.icmp_echo_ignore_broadcasts=1
+#     net.ipv4.icmp_ignore_bogus_error_messages=1
+#     # Make sure spoofed packets get logged
+#     net.ipv4.conf.all.log_martians = 1
+# }
+
+##############
+
+# new_port=2269
+# port modification
+#nano /etc/ssh/sshd_config
+### modification in this line to modify port
+#service ssh restart
+#echo "Test that ssh connexion stil work with the new port : "${new_port}""
+
+##### firewall implementation
+#sudo apt install fail2ban
+#sudo nano /etc/fail2ban/jail.local
+
+#### Adapt  [ssh-ddos] part to "enabled = true"
+#/etc/init.d/fail2ban restart
+
+
+
 
 
 # EOF
