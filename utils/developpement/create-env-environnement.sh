@@ -1,6 +1,8 @@
 #! /bin/bash
 workspace="/home/workspace"
 
+apt install openssh-client
+apt install openssh-server
 
 
 mkdir -p $workspace
