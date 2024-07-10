@@ -326,15 +326,23 @@ packages=(
     "nis" #  Network Information Service (NIS) is a client-server directory service protocol used for distributing system configuration files. It is formally known as Yellow Pages.
     "squid" # HTTP Proxy Server it is a server application that acts as an intermediary for clients requests seeking resources from servers. It can cache data to speed up common HTTP requests. The standard proxy server used in many distributions is the “Squid”.
     "snmpd" #  SNMP is a network-management protocol that is used to monitor network devices, collect statistics and performance.
+    
+    #### Probably add also below,  ### but verify what it do
+    # "rsh-redone-server"
+    # "yp-tools"
+    # "xinetd" 
+    # "nis"  
+    # "tftpd" 
+    # "atftpd" 
+    # "tftpd-hpa" 
 )
-# Check also for the following below :
-# xinetd nis yp-tools tftpd atftpd tftpd-hpa  rsh-redone-server
 
 purge_useless_packages() {
     for appli in "${packages[@]}"; do
         if ps aux | grep -v grep | grep -w "${appli}" > /dev/null; then
             echo "Using ps: $appli is Running"
             sudo apt-get purge -y "$appli"
+            sudo apt-get --purge remove -y "$appli"
             echo "$STEP_ICON  $appli removed" 
 
         else
@@ -642,6 +650,19 @@ set_chkrootkit() {
     chkrootkit
 }
 
+
+set_fail2ban() {
+    apt install fail2ban
+    ##### firewall implementation
+    #sudo nano /etc/fail2ban/jail.local
+    #### Adapt  [ssh-ddos] part to "enabled = true"
+    #/etc/init.d/fail2ban restart
+    #service ssh restart
+}
+
+
+#echo "Test that ssh connexion stil work with the new port : "${new_port}""
+
 main() {
     # setup_ssh_ed25519
     sys_upgrades
@@ -731,19 +752,7 @@ main "$@"
 
 ##############
 
-# new_port=2269
-# port modification
-#nano /etc/ssh/sshd_config
-### modification in this line to modify port
-#service ssh restart
-#echo "Test that ssh connexion stil work with the new port : "${new_port}""
 
-##### firewall implementation
-#sudo apt install fail2ban
-#sudo nano /etc/fail2ban/jail.local
-
-#### Adapt  [ssh-ddos] part to "enabled = true"
-#/etc/init.d/fail2ban restart
 
 
 
