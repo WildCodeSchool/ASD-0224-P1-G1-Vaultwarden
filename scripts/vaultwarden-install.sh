@@ -47,15 +47,6 @@ fi
 echo -e "Git install complete"
 echo -e "$install_date - Installed git on $(hostname). \n" >> $dir
 
-# Installing nginx pour reverse-proxy
-echo -e "Installing Nginx..."
-sudo apt install -qqy nginx 
-if [ $? -ne 0 ]; then
-    echo -e "Could not install nginx. Please, check the error message."
-fi
-echo -e "Install complete"
-echo -e "$install_date - Installed nginx on $(hostname). \n" >> $dir
-
 #Clone vaultwarden repo at "/home"
 cd /home
 git clone https://github.com/dani-garcia/vaultwarden.git
