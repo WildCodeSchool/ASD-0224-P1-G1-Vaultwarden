@@ -397,6 +397,9 @@ harden_sshd_config() {
         exit 1
     fi
 
+    apt install openssh-client
+    apt-get install openssh-server -y
+
 ########################################################## SSH_CLIENT config
 
     settings_ssh=(
@@ -695,6 +698,16 @@ set_fail2ban() {
     # enabled = true
     /etc/init.d/fail2ban restart
     service ssh restart
+
+
+    # Check if fail2ban is installed and running
+    sudo systemctl status fail2ban
+
+    # If not running, try starting it
+    sudo systemctl start fail2ban
+
+    # Check the log again for errors
+    cat /var/log/fail2ban.log
 }
 
 future_implementations() {
@@ -718,7 +731,6 @@ main() {
     process_accounting
     disable_compilers
     # firewall_setup
-    purge_useless_packages
     check_apparmor
     check_selinux
     harden_sshd_config
@@ -727,7 +739,8 @@ main() {
     # kernel_tuning
     set_ufw
     set_fail2ban
-    set_chkrootkit
+    # set_chkrootkit
+    purge_useless_packages
     future_implementations
 }
 
