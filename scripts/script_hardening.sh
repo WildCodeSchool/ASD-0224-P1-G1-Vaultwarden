@@ -724,6 +724,7 @@ main() {
     upnp_desactivation
     # kernel_tuning
     set_chkrootkit
+    set_ufw
     set_fail2ban
 }
 
