@@ -1,6 +1,4 @@
 #!/bin/bash
-
-echo "script started"
 RED=$'\e[31m'
 GREEN=$'\e[32m'
 YELLOW=$'\e[93m'
@@ -13,17 +11,36 @@ CONCLUSION="${RED}[#]${RESET}"
 endc=$'\e[0m' #endc for end-color
 
 # Define the remote server credentials
+SSH_CONFIG="/etc/ssh/ssh_config"  
+SSHD_CONFIG="/etc/ssh/sshd_config"  
+
+#### Variable for testing 
+REMOTE_USER="root"
+EMAIL="root@gmail.com"
+REMOTE_HOST="your_remote_host"
+REMOTE_PORT="22" # Default SSH port, change if necessary
+declare -i PORT=1754
 REMOTE_USER="your_remote_username"
 REMOTE_HOST="your_remote_host"
 REMOTE_PORT="22" # Default SSH port, change if necessary
 SSH_KEY="/path/to/your/private/key"
+# SSH_declare -i PORT=1754
 
-SSH_CONFIG="/etc/ssh/ssh_config"  
-SSHD_CONFIG="/etc/ssh/sshd_config"  
-declare -i PORT=1754
+SSH_PRE_PATH="~/.ssh/id_ed25519"
+SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
+SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
 
-read -p "Enter the name of your remote server: " SERVER_NAME
-read -p "What is the SSH port number on the remote server? " SSH_PORT
+#### Variable for production
+# read -p "What is your email address ? " EMAIL
+# read -p "What is your server name ? " SERVER_NAME
+# read -p "Enter the name of your remote server: " SERVER_NAME
+# read -p "What is the SSH port number on the remote server? " SSH_PORT
+
+# read -p "What is your remote username? " REMOTE_USER
+# read -p "What is the remote host name ? " REMOTE_HOST
+# read -p "What is the SSH port number on the remote server ? " REMOTE_PORT
+# read -p "What is the SSH port number on the remote server ? " SSH_PORT
+# ##  read -p " What is the remote ssh_key path on your local machine ?" SSH_KEY ### Already set with static variable
 
 STEP_TEXT=(
     "Verify if it's a correct ubuntu version"
@@ -40,21 +57,6 @@ STEP_TEXT=(
 )
 
 # REMOTE_COMMANDS=$(cat <<'EOF'
-
-##### Variables that can be modified
-
-# REMOTE_USER="your_remote_username"
-# REMOTE_HOST="your_remote_host"
-# REMOTE_PORT="22" # Default SSH port, change if necessary
-# SSH_KEY="/path/to/your/private/key"
-
-# read -p "What is your email address ? " EMAIL
-
-EMAIL="your_email@example.com"
-SSH_PRE_PATH="~/.ssh/id_ed25519"
-SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
-SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
-
 # Function to set up SSH key-based authentication using Ed25519
 setup_ssh_ed25519() {
     if [ -z "$$REMOTE_USER" ] || [ -z "$remote_host" ] || [ -z "$email" ]; then
