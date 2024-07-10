@@ -19,9 +19,20 @@ sudo mkdir -p /etc/modsecurity
 sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 
 # Inclure les règles OWASP CRS dans la configuration de sécurité Apache
+rm /etc/apache2/mods-enabled/security2.conf
+
 echo "
-IncludeOptional /etc/modsecurity/crs/crs-setup.conf
-IncludeOptional /usr/share/modsecurity-crs/rules/*.conf
+LoadModule unique_id_module modules/mod_unique_id.so
+LoadModule security2_module modules/mod_security2.so
+
+<IfModule security2_module>
+
+        Include /etc/modsecurity/crs/crs-setup.conf
+        IncludeOptional /usr/share/modsecurity-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+        Include /usr/share/modsecurity-crs/rules/*.conf
+        IncludeOptional /usr/share/modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+
+</IfModule>
 " | sudo tee -a /etc/apache2/mods-enabled/security2.conf
 
 # Créer un répertoire pour les certificats SSL

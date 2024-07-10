@@ -20,6 +20,9 @@ nginx_conf="/etc/nginx/sites-available/default"
 domaine="notre.domaine.v6.rocks"  # Replace with our domaine
 dynv6_token="" # Penser a resegner notre token
 
+# Maj du temps (en cas de snapshot)
+systemctl restart systemd-timesyncd
+
 # Update package lists
 echo "Updating package lists..."
 apt update
@@ -37,7 +40,6 @@ systemctl stop nginx
 ##################################
 certbot certonly --manual --register-unsafely-without-email --agree-tos -n --preferred-challenges dns -d "*.$domaine" -d $domaine
 echo -e "$install_date - Certificat recupere.\n" >> $dir
-echo -e "\n" && read -p "Fin install Certbot" && echo -e "\n"
 
 # Configure Nginx
 echo "Configuring Nginx as a reverse proxy..."
@@ -61,24 +63,17 @@ server {
 }
 EOF
 echo -e "$install_date - Parametrage Nginx reverse proxy et preparation Modprobe.\n" >> $dir
-echo -e "\n" && read -p "Fin modif conf Nginx" && echo -e "\n"
 
 # Recuperation et installation de ModSecurity
 rm -rf /usr/local/src/ModSecurity/
 git clone --recurse-submodules https://github.com/SpiderLabs/ModSecurity /usr/local/src/ModSecurity
-git checkout v3/master
 cd /usr/local/src/ModSecurity/
-#git submodule init
-#git submodule update --remote
-echo -e "\n" && read -p "Fin recup git Modsecurity" && echo -e "\n"
+git checkout v3/master
 ./build.sh
-echo -e "\n" && read -p "Fin build.sh Modsecurity" && echo -e "\n"
 ./configure
-echo -e "\n" && read -p "\nFin configure.sh Modsecurity\n" && echo -e "\n"
 make
-echo -e "\n" && read -p "\nFin make Modsecurity\n" && echo -e "\n"
 make install
-echo -e "\n" && read -p "\nFin make install Modsecurity\n" && echo -e "\n"
+echo -e "$install_date - Compilation et installation ModSecurity OK.\n" >> $dir
 
 # Module ModSecurity pour Nginx
 rm -rf /usr/local/src/ModSecurity-nginx
