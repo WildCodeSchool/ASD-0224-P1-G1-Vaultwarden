@@ -651,7 +651,38 @@ set_chkrootkit() {
 }
 
 ##### firewall implementation
+set_ufw() {
+    # Check if UFW is installed, if not, install it
+    if ! command -v ufw &> /dev/null
+    then
+        echo "UFW is not installed. Installing UFW..."
+        sudo apt-get update
+        sudo apt-get install ufw -y
+    fi
+    # Enable UFW
+    echo "Enabling UFW..."
+    sudo ufw enable
 
+    # Declare an array of ports to allow
+    declare -i port_list=(
+        443
+        80
+        1754
+    )
+
+    # Allow connections on the specified ports
+    for port in "${port_list[@]}"
+    do
+        echo "Allowing connections on port $port..."
+        sudo ufw allow $port/tcp
+    done
+
+    # Show UFW status
+    echo "Showing UFW status..."
+    sudo ufw status verbose
+
+    echo "UFW has been configured and is running."
+}
 
 # Intrusion prevention software framework
 set_fail2ban() {
