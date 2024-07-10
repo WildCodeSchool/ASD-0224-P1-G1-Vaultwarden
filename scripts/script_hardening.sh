@@ -56,6 +56,7 @@ STEP_TEXT=(
     "Scheduling daily update download"
 )
 
+
 # # REMOTE_COMMANDS=$(cat <<'EOF'
 # # Function to set up SSH key-based authentication using Ed25519
 # setup_ssh_ed25519() {
@@ -135,15 +136,9 @@ esac
 apt update
 apt upgrade
 apt dist-upgrade
+apt install openssh-client
+apt install openssh-server
 
-# Check if UFW is installed
-ufw status 2>>/dev/null >&2
-if [[ "$?" -eq 1 ]]; then
-    echo "Skipping UFW config as it does not seem to be installed - check log to know more"
-else
-    apt install ufw
-    "${STEP_ICON}" ufw added
-fi
 
 sys_upgrades() {
     apt-get --yes --force-yes update
@@ -344,7 +339,6 @@ purge_useless_packages() {
             sudo apt-get purge -y "$appli"
             sudo apt-get --purge remove -y "$appli"
             echo "$STEP_ICON  $appli removed" 
-
         else
             echo "$STEP_ICON Using ps: $appli is Not running"
         fi
@@ -544,6 +538,17 @@ set_chkrootkit() {
     chkrootkit
 }
 
+
+# # Check if UFW is installed
+# ufw status 2>>/dev/null >&2
+# if [[ "$?" -eq 1 ]]; then
+#     echo "Skipping UFW config as it does not seem to be installed - check log to know more"
+# else
+#     apt install ufw
+# fi
+
+
+
 ##### firewall implementation
 set_ufw() {
     # Check if UFW is installed, if not, install it
@@ -552,10 +557,14 @@ set_ufw() {
         echo "UFW is not installed. Installing UFW..."
         sudo apt-get update
         sudo apt-get install ufw -y
+        "${STEP_ICON}" ufw installed
+
     fi
     # Enable UFW
+
     echo "Enabling UFW..."
     sudo ufw enable
+    "${STEP_ICON}" ufw enabmed
 
     # Declare an array of ports to allow
     declare -i port_list=(

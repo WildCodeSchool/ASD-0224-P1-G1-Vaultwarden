@@ -1,6 +1,8 @@
 #! /bin/bash
 workspace="/home/workspace"
 
+
+
 mkdir -p $workspace
 cd $workspace
 cp /etc/ssh/sshd_config $workspace/sshd_config_bakcup
@@ -12,5 +14,3 @@ cat <<EOF > reset_script.sh
 cp $workspace/sshd_config_bakcup /etc/ssh/sshd_config 
 cp $workspace/ssh_config_bakcup /etc/ssh/ssh_config 
 EOF
-
-
