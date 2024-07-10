@@ -697,7 +697,9 @@ set_fail2ban() {
     service ssh restart
 }
 
-#echo "Test that ssh connexion stil work with the new port : "${new_port}""
+future_implementations() {
+    echo -e "Future implementation can be added in the future : ClamAv, Crowdsec, etc... \n Hardening can still be improved"
+}
 
 main() {
     # setup_ssh_ed25519
@@ -723,14 +725,15 @@ main() {
     kerberos_setup_sshd
     upnp_desactivation
     # kernel_tuning
-    set_chkrootkit
     set_ufw
     set_fail2ban
+    set_chkrootkit
+    future_implementations
 }
 
 main "$@"
 
-
+echo "Test that ssh connexion stil work with the new port : "${PORT}""
 
 
 #### Verify what do that part in details 
