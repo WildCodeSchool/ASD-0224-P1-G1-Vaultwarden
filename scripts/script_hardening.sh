@@ -384,20 +384,13 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 declare -i PORT=1754
 
 # Function to update configuration files
-update_config_file() {
-    local file=$1
-    local setting=$2
-    local value=$3
-    local setting_regex="^#?\s*$setting\s+.*$"
-    local setting_found=$(grep -E "$setting_regex" "$file")
-
-    if [[ "$setting_found" ]]; then
-        sed -i "/$setting_regex/c\\$setting $value" "$file"
-        echo "Updated $setting from $current_value to $value in $file."
-    else
-        echo "$setting $value" >> "$file"
-        echo "Added $setting with value $value to $file."
-    fi
+    # Function to update sshd_config safely
+update_ssh_config() {
+    local setting=$1
+    local value=$2
+    # Check if the setting exists and replace it or add it if not
+    grep -qE "^#?$setting" $SSHD_CONFIG && sed -i "s/^#?$setting.*/$setting $value/" $SSHD_CONFIG || echo "$setting $value" >> $SSHD_CONFIG
+    echo "Updated $setting to $value."
 }
 
 # SSH client configuration settings
@@ -466,8 +459,6 @@ done
 echo "Restarting SSHD..."
 systemctl restart sshd
 echo "SSH configuration completed."
-
-
 
 kerberos_setup_sshd() {
     # Prompt the user to confirm UPnP deactivation

@@ -19,6 +19,11 @@ harden_sshd_config() {
 
     declare -A settings_ssh
     settings_ssh=(
+        [AcceptEnv]="LANG LC_*"
+        [Subsystem]="sftp /usr/lib/openssh/sftp-server"
+        [Protocol]="2"
+        [UsePrivilegeSeparation]="no"  # Note: 'UsePrivilegeSeparation' is deprecated in newer OpenSSH
+        [DebianBanner]="no"
         [ForwardAgent]="yes"
         [ForwardX11]="no"
         [ForwardX11Trusted]="no"
@@ -109,16 +114,6 @@ harden_sshd_config() {
         #GSSAPICleanupCredentials yes
         #GSSAPIStrictAcceptorCheck yes
         #GSSAPIKeyExchange no
-
-        # Set this to 'yes' to enable PAM authentication, account processing,
-        # and session processing. If this is enabled, PAM authentication will
-        # be allowed through the ChallengeResponseAuthentication and
-        # PasswordAuthentication.  Depending on your PAM configuration,
-        # PAM authentication via ChallengeResponseAuthentication may bypass
-        # the setting of "PermitRootLogin without-password".
-        # If you just want the PAM account and session checks to run without
-        # PAM authentication, then enable this but set PasswordAuthentication
-        # and ChallengeResponseAuthentication to 'no'.
         [UsePAM]="no"
 
         [AllowAgentForwarding]="yes"
@@ -126,7 +121,7 @@ harden_sshd_config() {
         #GatewayPorts no
         [X11Forwarding]="no"
         #X11DisplayOffset 10
-        X11UseLocalhost="no"
+        [X11UseLocalhost]="no"
         #PermitTTY yes
         [PrintMotd]="no"
         #PrintLastLog yes
@@ -168,35 +163,31 @@ harden_sshd_config() {
     )
 
    update_config_file() {
-        local file=$1
-        local setting=$2
-        local value=$3
-        local setting_regex="^#?\s*$setting\s+.*$"
-        local setting_found=$(grep -E "$setting_regex" "$file")
-
-        if [[ "$setting_found" ]]; then
-            local current_value=$(echo "$setting_found" | sed -E "s/^#?\s*$setting\s+(.*)$/\1/")
-            if [[ "$current_value" != "$value" ]]; then
-                sed -i "/$setting_regex/c\\$setting $value" "$file"
-                echo "Updated $setting $setting from $current_value to $value in $file."
-            else
-                echo "$setting is already set to $value; no changes made."
-            fi
-        else
-            echo "$setting $value" >> "$file"
-            echo "Added $setting with value $value to $file."
-        fi
+        local setting=$1
+        local value=$2
+        # Check if the setting exists and replace it or add it if not
+        grep -qE "^#?$setting" $SSHD_CONFIG && sed -i "s/^#?$setting.*/$setting $value/" $SSHD_CONFIG || echo "$setting $value" >> $SSHD_CONFIG
+        echo "Updated $setting to $value."
     }
 
-    # Apply settings to ssh_config
-    for setting in "${!settings_ssh[@]}"; do
-        update_config_file "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
+  # Apply settings using the associative array
+    for setting in "${!sshd_settings[@]}"; do
+        update_sshd_config "$setting" "${sshd_settings[$setting]}"
     done
 
-    # Apply settings to sshd_config
-    for setting in "${!settings_ssh_daemon[@]}"; do
-        update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
+
+    for setting in "${!ssh_settings[@]}"; do
+        update_sshd_config "$setting" "${ssh_settings[$setting]}"
     done
+
+    # Restart sshd to apply changes
+    systemctl restart sshd
+    echo "sshd configuration updated and service restarted."
+
+    # # Apply settings to sshd_config
+    # for setting in "${!settings_ssh_daemon[@]}"; do
+    #     update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
+    # done
 }
 
 harden_sshd_config
