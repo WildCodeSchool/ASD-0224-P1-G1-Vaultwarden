@@ -650,16 +650,20 @@ set_chkrootkit() {
     chkrootkit
 }
 
+##### firewall implementation
 
+
+# Intrusion prevention software framework
 set_fail2ban() {
     apt install fail2ban
-    ##### firewall implementation
-    #sudo nano /etc/fail2ban/jail.local
-    #### Adapt  [ssh-ddos] part to "enabled = true"
-    #/etc/init.d/fail2ban restart
-    #service ssh restart
+    echo "[ssh-ddos]" > /etc/fail2ban/jail.local 
+    echo "enabled = true" >> /etc/fail2ban/jail.local
+    ## If need to copy paste
+    # [ssh-ddos]
+    # enabled = true
+    /etc/init.d/fail2ban restart
+    service ssh restart
 }
-
 
 #echo "Test that ssh connexion stil work with the new port : "${new_port}""
 
@@ -688,6 +692,7 @@ main() {
     upnp_desactivation
     # kernel_tuning
     set_chkrootkit
+    set_fail2ban
 }
 
 main "$@"
