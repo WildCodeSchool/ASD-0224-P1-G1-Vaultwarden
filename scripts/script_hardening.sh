@@ -47,10 +47,13 @@ STEP_TEXT=(
 # REMOTE_HOST="your_remote_host"
 # REMOTE_PORT="22" # Default SSH port, change if necessary
 # SSH_KEY="/path/to/your/private/key"
-# EMAIL="your_email@example.com"
 
+# read -p "What is your email address ? " EMAIL
+
+EMAIL="your_email@example.com"
 SSH_PRE_PATH="~/.ssh/id_ed25519"
 SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
+SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
 
 # Function to set up SSH key-based authentication using Ed25519
 setup_ssh_ed25519() {
@@ -63,7 +66,7 @@ setup_ssh_ed25519() {
     ssh-keygen -t ed25519 -C "$EMAIL" -f ~/.ssh/id_ed25519_$SERVER_NAME
 
     # Automatically copy the Ed25519 key to the server
-    ssh-copy-id -i ~/.ssh/id_ed25519_$SERVER_NAME.pub -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
+    ssh-copy-id -i $SSH_KEY_PUB_PATH -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST
 
     # SSH into the server to harden SSH configuration
     ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST <<EOF
@@ -284,76 +287,6 @@ process_accounting() {
     # To show users' connect times, run ac. To show information about commands previously run by users, run sa. To see the last commands run, run lastcomm.
 }
 
-#### Verify what do that part in details 
-#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
-# kernel_tuning() {
-#     sysctl kernel.randomize_va_space=1
-
-#     # Enable IP spoofing protection
-#     sysctl net.ipv4.conf.all.rp_filter=1
-
-#     # Disable IP source routing
-#     sysctl net.ipv4.conf.all.accept_source_route=0
-
-#     # Ignoring broadcasts request
-#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
-
-#     # Make sure spoofed packets get logged
-#     sysctl net.ipv4.conf.all.log_martians=1
-#     sysctl net.ipv4.conf.default.log_martians=1
-
-#     # Disable ICMP routing redirects
-#     sysctl -w net.ipv4.conf.all.accept_redirects=0
-#     sysctl -w net.ipv6.conf.all.accept_redirects=0
-#     sysctl -w net.ipv4.conf.all.send_redirects=0
-
-#     # Disables the magic-sysrq key
-#     sysctl kernel.sysrq=0
-
-#     # Turn off the tcp_timestamps
-#     sysctl net.ipv4.tcp_timestamps=0
-
-#     # Enable TCP SYN Cookie Protection
-#     sysctl net.ipv4.tcp_syncookies=1
-
-#     # Enable bad error message Protection
-#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
-
-#     # RELOAD WITH NEW SETTINGS
-#     sysctl -p
-# }
-
-#### Verify what do that part in details 
-# second_kernel_tunning () {
-#     # Turn on execshield
-#     kernel.exec-shield=1
-#     kernel.randomize_va_space=1
-#     # Enable IP spoofing protection
-#     net.ipv4.conf.all.rp_filter=1
-#     # Disable IP source routing
-#     net.ipv4.conf.all.accept_source_route=0
-#     # Ignoring broadcasts request
-#     net.ipv4.icmp_echo_ignore_broadcasts=1
-#     net.ipv4.icmp_ignore_bogus_error_messages=1
-#     # Make sure spoofed packets get logged
-#     net.ipv4.conf.all.log_martians = 1
-# }
-
-##############
-
-# new_port=2269
-# port modification
-#nano /etc/ssh/sshd_config
-### modification in this line to modify port
-#service ssh restart
-#echo "Test that ssh connexion stil work with the new port : "${new_port}""
-
-##### firewall implementation
-#sudo apt install fail2ban
-#sudo nano /etc/fail2ban/jail.local
-
-#### Adapt  [ssh-ddos] part to "enabled = true"
-#/etc/init.d/fail2ban restart
 
 disable_compilers() {
     chmod 000 /usr/bin/byacc
@@ -741,6 +674,83 @@ set_chkrootkit() {
     apt-get --yes install chkrootkit
     chkrootkit
 }
+
+
+
+
+#### Verify what do that part in details 
+#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
+# kernel_tuning() {
+#     sysctl kernel.randomize_va_space=1
+
+#     # Enable IP spoofing protection
+#     sysctl net.ipv4.conf.all.rp_filter=1
+
+#     # Disable IP source routing
+#     sysctl net.ipv4.conf.all.accept_source_route=0
+
+#     # Ignoring broadcasts request
+#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
+
+#     # Make sure spoofed packets get logged
+#     sysctl net.ipv4.conf.all.log_martians=1
+#     sysctl net.ipv4.conf.default.log_martians=1
+
+#     # Disable ICMP routing redirects
+#     sysctl -w net.ipv4.conf.all.accept_redirects=0
+#     sysctl -w net.ipv6.conf.all.accept_redirects=0
+#     sysctl -w net.ipv4.conf.all.send_redirects=0
+
+#     # Disables the magic-sysrq key
+#     sysctl kernel.sysrq=0
+
+#     # Turn off the tcp_timestamps
+#     sysctl net.ipv4.tcp_timestamps=0
+
+#     # Enable TCP SYN Cookie Protection
+#     sysctl net.ipv4.tcp_syncookies=1
+
+#     # Enable bad error message Protection
+#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
+
+#     # RELOAD WITH NEW SETTINGS
+#     sysctl -p
+# }
+
+#### Verify what do that part in details 
+# second_kernel_tunning () {
+#     # Turn on execshield
+#     kernel.exec-shield=1
+#     kernel.randomize_va_space=1
+#     # Enable IP spoofing protection
+#     net.ipv4.conf.all.rp_filter=1
+#     # Disable IP source routing
+#     net.ipv4.conf.all.accept_source_route=0
+#     # Ignoring broadcasts request
+#     net.ipv4.icmp_echo_ignore_broadcasts=1
+#     net.ipv4.icmp_ignore_bogus_error_messages=1
+#     # Make sure spoofed packets get logged
+#     net.ipv4.conf.all.log_martians = 1
+# }
+
+##############
+
+# new_port=2269
+# port modification
+#nano /etc/ssh/sshd_config
+### modification in this line to modify port
+#service ssh restart
+#echo "Test that ssh connexion stil work with the new port : "${new_port}""
+
+##### firewall implementation
+#sudo apt install fail2ban
+#sudo nano /etc/fail2ban/jail.local
+
+#### Adapt  [ssh-ddos] part to "enabled = true"
+#/etc/init.d/fail2ban restart
+
+
+
 
 
 # EOF
