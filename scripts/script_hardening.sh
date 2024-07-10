@@ -296,14 +296,6 @@ disable_compilers() {
     # unless you are working with a specific one
 }
 
-# Verify what port allow and disallow, can be improved
-# firewall_setup() {
-#     ufw allow ssh
-#     ufw allow http
-#     ufw deny 23
-#     ufw default deny
-#     ufw enable
-# }
 
 # List of packages that are considered insecure and should be removed
 ### List that come from https://freelinuxtutorials.com/top-15-services-to-remove-for-securing-ubuntu-linux/
@@ -345,9 +337,7 @@ purge_useless_packages() {
     done
 }
 
-
-##### Checking security module in place 
-
+##### Checking security module in place
 # AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles.
 # Check if apparmor is installed command is available
 check_apparmor() {
@@ -377,35 +367,48 @@ check_selinux() {
     fi
 }
 
-# Perform the checks
+#!/bin/bash
 
 SSH_CONFIG="/etc/ssh/ssh_config"
 SSHD_CONFIG="/etc/ssh/sshd_config"
-declare -i PORT=1754
+PORT=1754
 
-# Function to update configuration files
-    # Function to update sshd_config safely
-update_ssh_config() {
-    local setting=$1
-    local value=$2
-    # Check if the setting exists and replace it or add it if not
-    grep -qE "^#?$setting" $SSHD_CONFIG && sed -i "s/^#?$setting.*/$setting $value/" $SSHD_CONFIG || echo "$setting $value" >> $SSHD_CONFIG
-    echo "Updated $setting to $value."
+update_sshd_config() {
+    local file="$1"
+    local setting="$2"
+    local value="$3"
+    
+    # Build the line to write or replace in the config file
+    local new_line="$setting $value"
+    
+    # Regex to find the existing setting, commented or not, handling whitespace
+    local setting_regex="^\s*#?\s*$setting\s.*$"
+
+    # Adding debug output to check which path is taken
+    echo "Attempting to update $setting to $value in $file..."
+
+    # Check if the setting exists and replace it, or add it if it doesn't
+    if grep -qP "$setting_regex" "$file"; then
+        echo "Setting found, updating..."
+        sed -i -r "s|$setting_regex|$new_line|" "$file"
+        echo "Updated $setting to $value in $file."
+    else
+        echo "Setting not found, adding..."
+        echo "$new_line" >> "$file"
+        echo "Added $setting with value $value to $file."
+    fi
 }
 
-# SSH client configuration settings
-declare -A settings_ssh=(
-    [ForwardAgent]="yes"
-    [ForwardX11]="no"
-    [ForwardX11Trusted]="no"
-    [PasswordAuthentication]="no"
-    [HostbasedAuthentication]="no"
-    [Port]="$PORT"
-    [Tunnel]="no"
-    [TunnelDevice]="any:any"
-)
+# Ensure the script is run as root
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root" >&2
+    exit 1
+fi
 
-# SSH daemon configuration settings
+# Apply the specific settings to sshd_config
+echo "Applying settings to $SSHD_CONFIG..."
+
+
 declare -A settings_ssh_daemon=(
     [Port]="$PORT"
     [LogLevel]="VERBOSE"
@@ -432,28 +435,88 @@ declare -A settings_ssh_daemon=(
     [Subsystem]="sftp /usr/lib/openssh/sftp-server"
     [DebianBanner]="no"
     [ClientAliveInterval]="10m"
-    [GSSAPIAuthentication]="yes"
+    [GSSAPIAuthentication]="no"
     [Protocol]="2"
     [UsePrivilegeSeparation]="no"
 )
 
+# Loop through all settings and apply them
+for setting in "${!settings_ssh_daemon[@]}"; do
+    update_sshd_config "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
+done
+
+
+# Function to update SSH configuration settings, both client and server
+update_ssh_config() {
+    local file="$1"
+    local setting="$2"
+    local value="$3"
+    
+    # Build the line to write or replace in the config file
+    local new_line="$setting $value"
+    
+    # Regex to find the existing setting, commented or not, with robust whitespace handling
+    local setting_regex="^\s*#?\s*$setting\b.*$"
+
+    # Check if the setting exists and replace it, or add it if it doesn't
+    if grep -qP "$setting_regex" "$file"; then
+        # Setting exists, replace it
+        sed -i -r "s|$setting_regex|$new_line|" "$file"
+        echo "Updated $setting to $value in $file."
+    else
+        # Setting does not exist, add it
+        echo "$new_line" >> "$file"
+        echo "Added $setting with value $value to $file."
+    fi
+}
+
 # Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root." >&2
+    echo "This script must be run as root" >&2
     exit 1
 fi
 
-# Apply settings to ssh_config
-echo "Applying settings to $SSH_CONFIG..."
-for setting in "${!settings_ssh[@]}"; do
-    update_config_file "$SSH_CONFIG" "$setting" "${settings_ssh[$setting]}"
+declare -A settings_client=(
+    [ForwardAgent]="yes"
+    [ForwardX11]="no"
+    [ForwardX11Trusted]="no"
+    [PasswordAuthentication]="no"
+    [HostbasedAuthentication]="no" # no verified     
+    #   GSSAPIAuthentication no
+    #   GSSAPIDelegateCredentials n
+    #   GSSAPIKeyExchange no
+    #   GSSAPITrustDNS no
+    #   BatchMode no
+    #   CheckHostIP yes
+    #   AddressFamily any
+    #   ConnectTimeout 0
+    #   StrictHostKeyChecking ask
+    #   IdentityFile ~/.ssh/id_rsa
+    #   IdentityFile ~/.ssh/id_dsa
+    #   IdentityFile ~/.ssh/id_ecds
+    #   IdentityFile ~/.ssh/id_ed25
+    [Port]="$PORT"
+    #   Ciphers aes128-ctr,aes192-c
+    #   MACs hmac-md5,hmac-sha1,uma
+    #   EscapeChar ~
+    [Tunnel]="no"
+    [TunnelDevice]="any:any"
+    #   PermitLocalCommand no
+    #   VisualHostKey no
+    #   ProxyCommand ssh -q -W %h:%
+    #   RekeyLimit 1G 1h
+    #   SendEnv LANG LC_*
+    #   HashKnownHosts yes
+    #   GSSAPIAuthentication yes
+)
+
+echo "Applying settings to SSH client configuration..."
+
+for setting in "${!settings_client[@]}"; do
+    update_ssh_config "$SSH_CONFIG" "$setting" "${settings_client[$setting]}"
 done
 
-# Apply settings to sshd_config
-echo "Applying settings to $SSHD_CONFIG..."
-for setting in "${!settings_ssh_daemon[@]}"; do
-    update_config_file "$SSHD_CONFIG" "$setting" "${settings_ssh_daemon[$setting]}"
-done
+echo "SSH client configuration updated. No need to restart the SSH daemon for client config changes."
 
 # Restart SSHD to apply changes
 echo "Restarting SSHD..."
@@ -502,6 +565,38 @@ kerberos_setup_sshd() {
     fi
 }
 
+
+
+##### firewall implementation
+set_ufw() {
+    if ! command -v ufw &> /dev/null; then
+        echo "UFW is not installed. Installing UFW..."
+        sudo apt update
+        sudo apt install ufw -y
+        echo "UFW installed successfully."
+    fi
+
+    echo "Enabling UFW and setting default policies..."
+    sudo ufw default deny incoming
+    sudo ufw default allow outgoing
+    sudo ufw enable
+
+    port_list=(1754 80 8080)
+
+    # Allow connections on the specified ports
+    for port in "${port_list[@]}"; do
+        echo "Allowing connections on port $port..."
+        sudo ufw allow $port/tcp
+    done
+
+    ufw allow ssh
+
+    echo "Showing UFW status..."
+    sudo ufw status verbose
+
+    echo "UFW has been configured and is running."
+}
+
 # UPnP (Universal Plug and Play)
 upnp_desactivation() {
     # Prompt the user to confirm UPnP deactivation
@@ -522,54 +617,6 @@ upnp_desactivation() {
     else
         echo "$STEP_ICON Invalid input. Please enter 'y' for yes or 'n' for no."
     fi
-}
-
-set_chkrootkit() {
-    apt-get --yes install chkrootkit
-    chkrootkit
-}
-
-
-# # Check if UFW is installed
-# ufw status 2>>/dev/null >&2
-# if [[ "$?" -eq 1 ]]; then
-#     echo "Skipping UFW config as it does not seem to be installed - check log to know more"
-# else
-#     apt install ufw
-# fi
-
-
-
-##### firewall implementation
-set_ufw() {
-    # Check if UFW is installed, if not, install it
-    if ! command -v ufw &> /dev/null
-    then
-        echo "UFW is not installed. Installing UFW..."
-        sudo apt-get update
-        sudo apt-get install ufw -y
-        "${STEP_ICON}" ufw installed
-
-    fi
-    # Enable UFW
-
-    echo "Enabling UFW..."
-    sudo ufw enabledeve
-        1754
-    )
-
-    # Allow connections on the specified ports
-    for port in "${port_list[@]}"
-    do
-        echo "Allowing connections on port $port..."
-        sudo ufw allow $port/tcp
-    done
-
-    # Show UFW status
-    echo "Showing UFW status..."
-    sudo ufw status verbose
-
-    echo "UFW has been configured and is running."
 }
 
 # Intrusion prevention software framework
@@ -620,6 +667,10 @@ set_fail2ban() {
     cat /var/log/fail2ban.log
 }
 
+set_chkrootkit() {
+    apt-get --yes install chkrootkit
+    chkrootkit
+}
 
 future_implementations() {
     echo -e "Future implementation can be added in the future : ClamAv, Crowdsec, etc... \n Hardening can still be improved"
@@ -658,233 +709,3 @@ main() {
 main "$@"
 
 echo "Test that ssh connexion stil work with the new port : "${PORT}""
-
-
-#### Verify what do that part in details 
-#### /etc/sysctl.conf file is used to configure kernel parameters at runtime. Linux reads and applies settings from /etc/sysctl.conf at boot time. 
-# kernel_tuning() {
-#     sysctl kernel.randomize_va_space=1
-
-#     # Enable IP spoofing protection
-#     sysctl net.ipv4.conf.all.rp_filter=1
-
-#     # Disable IP source routing
-#     sysctl net.ipv4.conf.all.accept_source_route=0
-
-#     # Ignoring broadcasts request
-#     sysctl net.ipv4.icmp_echo_ignore_broadcasts=1
-
-#     # Make sure spoofed packets get logged
-#     sysctl net.ipv4.conf.all.log_martians=1
-#     sysctl net.ipv4.conf.default.log_martians=1
-
-#     # Disable ICMP routing redirects
-#     sysctl -w net.ipv4.conf.all.accept_redirects=0
-#     sysctl -w net.ipv6.conf.all.accept_redirects=0
-#     sysctl -w net.ipv4.conf.all.send_redirects=0
-
-#     # Disables the magic-sysrq key
-#     sysctl kernel.sysrq=0
-
-#     # Turn off the tcp_timestamps
-#     sysctl net.ipv4.tcp_timestamps=0
-
-#     # Enable TCP SYN Cookie Protection
-#     sysctl net.ipv4.tcp_syncookies=1
-
-#     # Enable bad error message Protection
-#     sysctl net.ipv4.icmp_ignore_bogus_error_responses=1
-
-#     # RELOAD WITH NEW SETTINGS
-#     sysctl -p
-# }
-
-#### Verify what do that part in details 
-# second_kernel_tunning () {
-#     # Turn on execshield
-#     kernel.exec-shield=1
-#     kernel.randomize_va_space=1
-#     # Enable IP spoofing protection
-#     net.ipv4.conf.all.rp_filter=1
-#     # Disable IP source routing
-#     net.ipv4.conf.all.accept_source_route=0
-#     # Ignoring broadcasts request
-#     net.ipv4.icmp_echo_ignore_broadcasts=1
-#     net.ipv4.icmp_ignore_bogus_error_messages=1
-#     # Make sure spoofed packets get logged
-#     net.ipv4.conf.all.log_martians = 1
-# }
-
-##############
-
-
-
-
-
-
-
-# EOF
-# )
-# # Execute the commands on the remote server
-# ssh -i $SSH_KEY -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOST "$REMOTE_COMMANDS"
-
-
-##### Add later with adaptation the code below,  
-
-
-# https://ittavern.com/ssh-server-hardening/
-
-# Disable tunneling and port forwarding #
-# AllowAgentForwarding no
-# AllowTcpForwarding no
-# PermitTunnel no
-
-# Disabling those functions makes it more difficult to use the server as a jump host to gain access to the connected networks, malicious or not. Most servers do not need those functions enabled, but to learn more, feel free to check my article about SSH tunneling and port forwarding.
-
-# Disable unused authentification methods #
-# KerberosAuthentication no
-# GSSAPIAuthentication no
-# ChallengeResponseAuthentication
-# It highly depends on your needs, but if an authentification method is unused, it should be disabled as it increases the attack surface to exploits and vulnerabilities.
-# Side note: Please ensure you don't disable the only method you can log in to prevent a lockout. 
-
-# PermitTunnel no
-# # Signification : Le paramètre PermitTunnel dans la configuration d'OpenSSH contrôle la possibilité d'établir des tunnels de données SSH. 
-# Lorsque cette fonction est activée, les utilisateurs peuvent créer des tunnels qui encapsulent d'autres types de trafic (comme le trafic TCP/IP) dans une connexion SSH.
-# # Configuration recommandée : Bien que les tunnels SSH puissent être utiles pour sécuriser le trafic entre des points distants, 
-# ils peuvent également être utilisés de manière inappropriée pour contourner les politiques de sécurité réseau. 
-# Par exemple, un utilisateur pourrait établir un tunnel SSH pour contourner un pare-feu ou un filtre de contenu. 
-# Si les tunnels SSH ne sont pas nécessaires pour vos opérations normales, il est recommandé de désactiver cette fonctionnalité pour réduire la surface d'attaque potentielle. 
-# Configurez PermitTunnel no dans votre fichier de configuration SSH pour désactiver la création de tunnels.
-
-# MaxAuthTries
-# # Signification : Définit le nombre maximum de tentatives d'authentification autorisées par connexion.
-# # Configuration recommandée : Un nombre réduit de tentatives, comme MaxAuthTries 3, aide à prévenir les attaques par force brute.
-
-# ClientAliveInterval et ClientAliveCountMax
-# Usage : Ces paramètres aident à détecter les connexions SSH inactives et à les fermer.
-# Configuration recommandée : ClientAliveInterval 0 et ClientAliveCountMax 2. Cela ferme la connexion si le client reste inactif pendant 15 minutes.
-
-
-# AllowUsers et AllowGroups
-# Usage : Restreint l'accès SSH à certains utilisateurs ou groupes.
-# Configuration recommandée : Utilisez AllowUsers user1 user2 et/ou AllowGroups group1 group2 pour limiter l'accès aux utilisateurs ou groupes spécifiés.
-
-# UsePAM
-# Signification : Active ou désactive l'utilisation des Pluggable Authentication Modules (PAM).
-# Configuration recommandée : La configuration de UsePAM yes peut être appropriée pour des environnements où les fonctionnalités spécifiques de PAM sont souhaitées.
-
-# DenyUsers et DenyGroups
-# Usage : Spécifie les utilisateurs et groupes qui sont explicitement interdits de se connecter via SSH.
-# Configuration recommandée : DenyUsers user3 user4 et/ou DenyGroups group3 group4 pour bloquer l'accès à des utilisateurs ou groupes spécifiques.
-
-# Récapitulatif des valeurs recommandées
-
-# #!/bin/bash
-# # Script to harden ssh on ubuntu/debian server
-# # follow on my blog http://www.coderew.com/hardening_ssh_on_remote_ubuntu_debian_server/ 
-# # checkout the repo for more scripts https://github.com/nvnmo/handy-scripts
-
-# read -p "Enter your server IP:" serverIP # prompt for server IP
-# read -p "Enter your username(requires root privileges):" username # prompt for username
-# printf "\nChanging the default SSH port is one of the easiest\n things you can do to help harden you servers security. \nIt will protect you from robots that are programmed \nto scan for port 22 openings, and commence \ntheir attack."
-# printf "\n"
-# read -p "Do you want to change default SSH port?[Y/n]" -n 1 portChange
-# printf "\n"
-# portNum=0
-# if [[ $portChange =~ ^[Yy]$ ]];then
-#   printf "Choose an available port.The port number does not \nreally matter as long as you do no choose something that \nis already in use and falls within the \nport number range."
-#   printf "\n"
-#   read -p "Port Number:" portNum # a port num to change
-#   printf "\n"
-# fi
-# printf "\n"
-# read -p "Do you want to disable root login?[Y/n]" -n 1 rootLogin;printf "\n"
-# read -p "Do you want to change protocol version to 2?[Y/n]" -n 1 protocolChange;printf "\n"
-# read -p "Do you want to enable privilege seperation?[Y/n]" -n 1 privilegeSep;printf "\n"
-# read -p "Do you want to disable empty passwords?[Y/n]" -n 1 emptyPass;printf "\n"
-# read -p "Do you want to disable X11 forwarding?[Y/n]" -n 1 x11Forwarding;printf "\n"
-# read -p "Do you want to enable TCPKeepAlive to avoid zombies?[Y/n]" -n 1 zombies;printf "\n"
-
-# echo "cat /etc/ssh/sshd_config > /etc/ssh/sshd_config.bak" > .local_script_$0
-
-# if [[ $portChange =~ ^[Yy]$ ]];then
-#   echo "sed \"s/.*Port.*/Port $portNum/\" /etc/ssh/sshd_config > temp" >> .local_script_$0
-#   echo "cp temp /etc/ssh/sshd_config" >> .local_script_$0
-# fi
-# if [[ $rootLogin =~ ^[Yy]$ ]];then
-#   echo "sed '0,/^.*PermitRootLogin.*$/s//PermitRootLogin no/' /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $protocolChange =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*Protocol.*$/Protocol 2/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $privilegeSep =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*UsePrivilegeSeparation.*$/UsePrivilegeSeparation yes/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $emptyPass =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*PermitEmptyPasswords.*$/PermitEmptyPasswords no/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $x11Forwarding =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*X11Forwarding.*$/X11Forwarding no/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-# if [[ $zombies =~ ^[Yy]$ ]];then
-#   echo "sed -i \"s/^.*TCPKeepAlive.*$/TCPKeepAlive yes/\" /etc/ssh/sshd_config" >> .local_script_$0
-
-# fi
-
-# MYSCRIPT=`base64 -w0 .local_script_$0`
-# ssh -t $username@$serverIP "echo $MYSCRIPT | base64 -d | sudo bash"
-# rm .local_script_$0
-# echo "Success"
-# exit
-
-#  FROM AN OTHER GITHUB, need to adapt and remove useless things _____________________ 
-
-# echo " - Changing value PermitUserEnvironment to no."
-# if [ $(cat /etc/ssh/sshd_config | grep PermitUserEnvironment | wc -l) -eq 0 ]; then
-#   echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PermitUserEnvironment [a-zA-Z0-9]*/s/#PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PermitUserEnvironment [a-zA-Z0-9]*/s/PermitUserEnvironment [a-zA-Z0-9]*/PermitUserEnvironment no/' /etc/ssh/sshd_config
-# fi
-
-
-
-# echo " - Changing value LoginGraceTime to 2m."
-# if [ $(cat /etc/ssh/sshd_config | grep LoginGraceTime | wc -l) -eq 0 ]; then
-#   echo "LoginGraceTime 2m" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#LoginGraceTime [a-zA-Z0-9]*/s/#LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-#   sed -i -e '1,/LoginGraceTime [a-zA-Z0-9]*/s/LoginGraceTime [a-zA-Z0-9]*/LoginGraceTime 2m/' /etc/ssh/sshd_config
-# fi
-
-
-# echo " - Changing value PrintLastLog to yes."
-# if [ $(cat /etc/ssh/sshd_config | grep PrintLastLog | wc -l) -eq 0 ]; then
-#   echo "PrintLastLog yes" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#PrintLastLog [a-zA-Z0-9]*/s/#PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-#   sed -i -e '1,/PrintLastLog [a-zA-Z0-9]*/s/PrintLastLog [a-zA-Z0-9]*/PrintLastLog yes/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing value AllowTcpForwarding to no."
-# if [ $(cat /etc/ssh/sshd_config | grep AllowTcpForwarding | wc -l) -eq 0 ]; then
-#   echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
-# else
-#   sed -i -e '1,/#AllowTcpForwarding [a-zA-Z0-9]*/s/#AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-#   sed -i -e '1,/AllowTcpForwarding [a-zA-Z0-9]*/s/AllowTcpForwarding [a-zA-Z0-9]*/AllowTcpForwarding no/' /etc/ssh/sshd_config
-# fi
-
-# echo " - Changing SSH Daemon Configuraion File Permissions."
-# chmod 600 /etc/ssh/sshd_config
-
-# echo " - Restarting SSH Daemon."
-# systemctl restart sshd
-
-# echo "[DONE]"
-# exit 0
