@@ -665,8 +665,9 @@ set_ufw() {
 
     # Declare an array of ports to allow
     declare -i port_list=(
-        443
         80
+        8080
+        443
         1754
     )
 
