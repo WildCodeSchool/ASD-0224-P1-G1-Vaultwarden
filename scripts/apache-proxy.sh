@@ -2,8 +2,6 @@
 
 # Mettre à jour et installer Apache2
 sudo apt update
-sudo apt purge -y nginx
-sudo apt autoremove -y
 sudo apt install -y apache2
 
 # Installer ModSecurity
