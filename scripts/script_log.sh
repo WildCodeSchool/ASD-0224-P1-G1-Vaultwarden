@@ -14,6 +14,8 @@
 dir="/tmp/install_log.txt"
 space=echo "" >> "$dir"
 
+apt install netstat
+
 # UNIX system version check
 echo "System version:" >> "$dir"
 uname -a >> "$dir"

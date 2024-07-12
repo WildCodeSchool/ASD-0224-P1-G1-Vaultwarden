@@ -59,7 +59,6 @@ STEP_TEXT=(
     "Scheduling daily update download"
 )
 
-
 # # REMOTE_COMMANDS=$(cat <<'EOF'
 # # Function to set up SSH key-based authentication using Ed25519
 # setup_ssh_ed25519() {
@@ -317,11 +316,10 @@ disable_compilers() {
 ### Other list 
 packages=(
     "xserver-xorg*" # X Windows System this provides the Graphical User Interface or GUI for users to have graphical login access, and interact with a mouse and keyboard. Command to check if X Windows System is installed or not:
-    "slapd" 
     "telnet" 
     "telnetd"
     "rsh-server"  
-    "slapd"  # Lightweight Directory Access Protocol (LDAP) Server is an open and cross platform software protocol that is used for directory services authentication. Command to check if LDAP  is installed or not:
+    # "slapd"  # Lightweight Directory Access Protocol (LDAP) Server is an open and cross platform software protocol that is used for directory services authentication. Command to check if LDAP  is installed or not:
     "nfs-kernel-server" # Network File System (NFS) -it is a distributed file system protocol that enables user to access remote data and files , retrieval of data from multiple directories and disks across a shared network Command to check if NFS is installed or not:
     "vsftpd" #    File Transfer Protocol (FTP) Server is a network protocol for transferring of files between computers Command to check if FTP is installed or not: (default installed is the VSFTP)
     "samba" # . Samba Server it allows system admin to share file systems and directory with Windows desktops, via the Server Message Block (SMB) protocol
@@ -603,7 +601,7 @@ set_ufw() {
     sudo ufw default allow outgoing
     sudo ufw enable
 
-    port_list=(1754 80 8080)
+    port_list=(80 443 1754 8080 8000 )
 
     # Allow connections on the specified ports
     for port in "${port_list[@]}"; do
@@ -718,16 +716,16 @@ main() {
     sys_upgrades
     unattended_upg
     purge_telnet
-    purge_nfs
+    # purge_nfs
     purge_whoopsie
     harden_ssh_brute
     logwatch_reporter
     purge_atd
     disable_avahi
     disable_cups
-    slap_disable
+    # slap_disable
     process_accounting
-    disable_compilers
+    # disable_compilers
     # firewall_setup
     check_apparmor
     check_selinux
