@@ -30,6 +30,9 @@ SSH_PRE_PATH="~/.ssh/id_ed25519"
 SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
 SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
 
+dir="/home/install_log.txt"
+install_date="$(date +'%Y_%m_%d')"
+
 #### Variable for production
 # read -p "What is your email address ? " EMAIL
 # read -p "What is your server name ? " SERVER_NAME
@@ -160,13 +163,6 @@ unattended_upg() {
     # APT::Periodic::Update-Package-Lists "1";
     # APT::Periodic::Unattended-Upgrade "1";
     #############
-}
-
-disable_root() {
-    passwd -l root
-    # for any reason if you need to re-enable it:
-    # sudo passwd -l root
-    echo "$STEP_ICON root disabled"
 }
 
 purge_telnet() {
@@ -331,6 +327,7 @@ purge_useless_packages() {
             sudo apt-get purge -y "$appli"
             sudo apt-get --purge remove -y "$appli"
             echo "$STEP_ICON  $appli removed" 
+            echo -e "$install_date - $appli removed \n" > $dir
         else
             echo "$STEP_ICON Using ps: $appli is Not running"
         fi
@@ -391,13 +388,17 @@ update_sshd_config() {
     if grep -qP "$setting_regex" "$file"; then
         echo "Setting found, updating..."
         sed -i -r "s|$setting_regex|$new_line|" "$file"
-        echo "Updated $setting to $value in $file."
+        echo "Updated $setting to $value in $file"        
+        echo "$STEP_ICON Updated $setting to $value in $file"
+        echo -e "$install_date - Updated $setting to $value in $file \n" > $dir
     else
         echo "Setting not found, adding..."
         echo "$new_line" >> "$file"
         echo "Added $setting with value $value to $file."
+        echo -e "$install_date - Added $setting with value $value to $file. \n" > $dir
     fi
 }
+
 
 # Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -516,7 +517,8 @@ for setting in "${!settings_client[@]}"; do
     update_ssh_config "$SSH_CONFIG" "$setting" "${settings_client[$setting]}"
 done
 
-echo "SSH client configuration updated. No need to restart the SSH daemon for client config changes."
+echo "$STEP_ICON SSH client configuration updated. No need to restart the SSH daemon for client config changes."
+echo "$install_date SSH client configuration updated. No need to restart the SSH daemon for client config changes." > $dir
 
 # Restart SSHD to apply changes
 echo "Restarting SSHD..."
@@ -573,7 +575,8 @@ set_ufw() {
         echo "UFW is not installed. Installing UFW..."
         sudo apt update
         sudo apt install ufw -y
-        echo "UFW installed successfully."
+        echo "$STEP_ICON UFW installed successfully"
+        echo -e "$install_date - UFW installed successfully \n" > $dir
     fi
 
     echo "Enabling UFW and setting default policies..."
@@ -590,11 +593,11 @@ set_ufw() {
     done
 
     ufw allow ssh
-
     echo "Showing UFW status..."
     sudo ufw status verbose
 
-    echo "UFW has been configured and is running."
+    echo "$STEP_ICON UFW has been configured and is running."
+    echo -e "$install_date - UFW configured and is running \n" > $dir
 }
 
 # UPnP (Universal Plug and Play)
@@ -612,6 +615,7 @@ upnp_desactivation() {
         echo "Disabling UPnP..."
         ufw deny proto udp from any to any port 1900
         echo "$STEP_ICON UPnP has been disabled."
+        echo -e "$install_date - UPnP disabled \n" > $dir
     elif [[ "$upnp_response" == "n" ]]; then
         echo "$STEP_ICON UPnP has not been disabled."
     else
@@ -626,8 +630,10 @@ set_fail2ban() {
         echo "Installing fail2ban..."
         apt-get update
         apt-get install -y fail2ban
+        echo "$STEP_ICON fail2ban installed"
+        echo -e "$install_date - fail2ban installed \n" > $dir
     else
-        echo "fail2ban is already installed."
+        echo "$STEP_ICON fail2ban is already installed."
     fi
 
     # Check if jail.local needs to be created or appended
@@ -652,11 +658,11 @@ set_fail2ban() {
     fi
 
     # Restart fail2ban to apply changes
-    echo "Restarting fail2ban service..."
+    echo "$STEP_ICON Restarting fail2ban service..."
     systemctl restart fail2ban
 
     # Restart SSH service
-    echo "Restarting SSH service..."
+    echo "$STEP_ICON Restarting SSH service..."
     systemctl restart ssh
 
     # Check if fail2ban is installed and running
@@ -670,6 +676,17 @@ set_fail2ban() {
 set_chkrootkit() {
     apt-get --yes install chkrootkit
     chkrootkit
+    echo "$STEP_ICON Chrootkit installed"
+    echo -e "$install_date - Chrootkit installed for hardening \n" > $dir
+
+}
+
+disable_root() {
+    passwd -l root
+    # for any reason if you need to re-enable it:
+    # sudo passwd -l root
+    echo "$STEP_ICON root disabled"
+    echo -e "$install_date - Root disabled for hardening. \n" > $dir
 }
 
 future_implementations() {
@@ -680,7 +697,6 @@ main() {
     # setup_ssh_ed25519
     sys_upgrades
     unattended_upg
-    disable_root
     purge_telnet
     purge_nfs
     purge_whoopsie
@@ -703,6 +719,7 @@ main() {
     set_fail2ban
     # set_chkrootkit
     purge_useless_packages
+    disable_root
     future_implementations
 }
 
