@@ -30,6 +30,9 @@ SSH_PRE_PATH="~/.ssh/id_ed25519"
 SSH_KEY_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}""
 SSH_KEY_PUB_PATH=""${SSH_PRE_PATH}"_"{$SERVER_NAME}".pub"
 
+dir="/home/install_log.txt"
+install_date="$(date +'%Y_%m_%d')"
+
 #### Variable for production
 # read -p "What is your email address ? " EMAIL
 # read -p "What is your server name ? " SERVER_NAME
@@ -136,8 +139,12 @@ esac
 apt update
 apt upgrade
 apt dist-upgrade
-apt install openssh-client
-apt install openssh-server
+
+open_ssh_install() {
+    apt install openssh-client
+    apt install openssh-server
+    echo -e "$install_date - openssh installed \n" > $dir
+}
 
 
 sys_upgrades() {
@@ -154,6 +161,7 @@ unattended_upg() {
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
     echo "$STEP_ICON unattended updates added"
+    echo -e "$install_date - unattended updates added \n" > $dir
     # This will create the file /etc/apt/apt.conf.d/20auto-upgrades
     # with the following contents:
     #############
@@ -162,18 +170,12 @@ unattended_upg() {
     #############
 }
 
-disable_root() {
-    passwd -l root
-    # for any reason if you need to re-enable it:
-    # sudo passwd -l root
-    echo "$STEP_ICON root disabled"
-}
-
 purge_telnet() {
     # Unless you need to specifically work with telnet, purge it
     # less layers = more sec
     apt-get --yes purge telnet
     echo "$STEP_ICON telnet disabled"
+    echo -e "$install_date - telnet disabled \n" > $dir
 }
 
 purge_nfs() {
@@ -181,12 +183,14 @@ purge_nfs() {
     # less layers = more sec
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
     echo "$STEP_ICON nfs disabled"
+    echo -e "$install_date - nfs disabled \n" > $dir
 }
 
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
     echo "$STEP_ICON whoopsie disabled"
+    echo -e "$install_date - whoopsie disabled \n" > $dir
 }
 
 ### Verify if using ssh or openssh
@@ -195,6 +199,7 @@ harden_ssh_brute() {
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
     echo "$STEP_ICON ssh hardening added with rate limiting"
+    echo -e "$install_date - ssh hardening added with rate limiting \n" > $dir
 }
 
 
@@ -205,11 +210,13 @@ logwatch_reporter() {
     mv /etc/cron.daily/00logwatch /etc/cron.weekly/
     cd
     echo "$STEP_ICON logwatch installed with cronjob"
+    echo -e "$install_date - logwatch installed with cronjob \n" > $dir
 }
 
 purge_atd() {
     apt-get --yes purge at
     echo "$STEP_ICON purge atd"
+    echo -e "$install_date - purge atd \n" > $dir
     # less layers equals more security
 }
 
@@ -224,12 +231,14 @@ disable_avahi() {
     systemctl stop avahi-daemon.socket
     apt purge avahi-daemon
     echo "$STEP_ICON avahi disabled"
+    echo -e "$install_date - avahi disabled \n" > $dir
 }
 
 # Common Unix Print System (CUPS) : this enables a system to function as a print server
 disable_cups() {
     apt purge cups
     echo "$STEP_ICON cups disabled"
+    echo -e "$install_date - cups disabled \n" > $dir
 }
 
 # Lightweight Directory Access Protocol (LDAP) Server
@@ -241,14 +250,17 @@ slap_disable() {
         # Using apt-get purge to remove slapd and its configuration files
         sudo apt-get purge -y slapd
         echo "$STEP_ICON slapd has been removed successfully."
+        echo -e "$install_date - slapd has been removed successfully \n" > $dir
     else
-        echo "$STEP_ICON slapd is not installed. No action needed."
+        echo "$STEP_ICON slapd is not installed. No action needed"
+        echo -e "$install_date - slapd is not installed. No action needed \n" > $dir
     fi
 
     if ps aux | grep nfsd; then
     echo "NSF is installed in the computer"
     apt-get purge -y rpcbind
     echo "$STEP_ICON rpcbind removed" 
+    echo -e "$install_date - rpcbind removed \n" > $dir
     fi
 }
 
@@ -258,8 +270,10 @@ nfs_disable() {
         if ps aux | grep nfs-kernel-server; then
         echo "NFS is installed in the machine"
         systemctl disable nfs-kernel-server
+        echo -e "$install_date - disable nfs-kernel-server \n" > $dir
         else 
-        echo "$STEP_ICON NFS is not installed. No action needed."
+        echo "$STEP_ICON NFS is not installed. No action needed"
+        echo -e "$install_date - NFS is not installed. No action needed \n" > $dir
         fi
     fi
 }
@@ -291,6 +305,7 @@ disable_compilers() {
     chmod 000 /usr/bin/*c++
     chmod 000 /usr/bin/*g++
     echo "$STEP_ICON  differents compilers disabled" 
+    echo -e "$install_date - differents compilers disabled \n" > $dir
     # 755 to bring them back online
     # It is better to restrict access to them
     # unless you are working with a specific one
@@ -331,6 +346,7 @@ purge_useless_packages() {
             sudo apt-get purge -y "$appli"
             sudo apt-get --purge remove -y "$appli"
             echo "$STEP_ICON  $appli removed" 
+            echo -e "$install_date - $appli removed \n" > $dir
         else
             echo "$STEP_ICON Using ps: $appli is Not running"
         fi
@@ -391,13 +407,17 @@ update_sshd_config() {
     if grep -qP "$setting_regex" "$file"; then
         echo "Setting found, updating..."
         sed -i -r "s|$setting_regex|$new_line|" "$file"
-        echo "Updated $setting to $value in $file."
+        echo "Updated $setting to $value in $file"        
+        echo "$STEP_ICON Updated $setting to $value in $file"
+        echo -e "$install_date - Updated $setting to $value in $file \n" > $dir
     else
         echo "Setting not found, adding..."
         echo "$new_line" >> "$file"
-        echo "Added $setting with value $value to $file."
+        echo "$STEP_ICON Added $setting with value $value to $file."
+        echo -e "$install_date - Added $setting with value $value to $file. \n" > $dir
     fi
 }
+
 
 # Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -516,7 +536,8 @@ for setting in "${!settings_client[@]}"; do
     update_ssh_config "$SSH_CONFIG" "$setting" "${settings_client[$setting]}"
 done
 
-echo "SSH client configuration updated. No need to restart the SSH daemon for client config changes."
+echo "$STEP_ICON SSH client configuration updated. No need to restart the SSH daemon for client config changes."
+echo "$install_date SSH client configuration updated. No need to restart the SSH daemon for client config changes." > $dir
 
 # Restart SSHD to apply changes
 echo "Restarting SSHD..."
@@ -573,7 +594,8 @@ set_ufw() {
         echo "UFW is not installed. Installing UFW..."
         sudo apt update
         sudo apt install ufw -y
-        echo "UFW installed successfully."
+        echo "$STEP_ICON UFW installed successfully"
+        echo -e "$install_date - UFW installed successfully \n" > $dir
     fi
 
     echo "Enabling UFW and setting default policies..."
@@ -590,11 +612,11 @@ set_ufw() {
     done
 
     ufw allow ssh
-
     echo "Showing UFW status..."
     sudo ufw status verbose
 
-    echo "UFW has been configured and is running."
+    echo "$STEP_ICON UFW has been configured and is running."
+    echo -e "$install_date - UFW configured and is running \n" > $dir
 }
 
 # UPnP (Universal Plug and Play)
@@ -612,6 +634,7 @@ upnp_desactivation() {
         echo "Disabling UPnP..."
         ufw deny proto udp from any to any port 1900
         echo "$STEP_ICON UPnP has been disabled."
+        echo -e "$install_date - UPnP disabled \n" > $dir
     elif [[ "$upnp_response" == "n" ]]; then
         echo "$STEP_ICON UPnP has not been disabled."
     else
@@ -626,8 +649,10 @@ set_fail2ban() {
         echo "Installing fail2ban..."
         apt-get update
         apt-get install -y fail2ban
+        echo "$STEP_ICON fail2ban installed"
+        echo -e "$install_date - fail2ban installed \n" > $dir
     else
-        echo "fail2ban is already installed."
+        echo "$STEP_ICON fail2ban is already installed."
     fi
 
     # Check if jail.local needs to be created or appended
@@ -652,11 +677,11 @@ set_fail2ban() {
     fi
 
     # Restart fail2ban to apply changes
-    echo "Restarting fail2ban service..."
+    echo "$STEP_ICON Restarting fail2ban service..."
     systemctl restart fail2ban
 
     # Restart SSH service
-    echo "Restarting SSH service..."
+    echo "$STEP_ICON Restarting SSH service..."
     systemctl restart ssh
 
     # Check if fail2ban is installed and running
@@ -670,6 +695,17 @@ set_fail2ban() {
 set_chkrootkit() {
     apt-get --yes install chkrootkit
     chkrootkit
+    echo "$STEP_ICON Chrootkit installed"
+    echo -e "$install_date - Chrootkit installed for hardening \n" > $dir
+
+}
+
+disable_root() {
+    passwd -l root
+    # for any reason if you need to re-enable it:
+    # sudo passwd -l root
+    echo "$STEP_ICON root disabled"
+    echo -e "$install_date - Root disabled for hardening. \n" > $dir
 }
 
 future_implementations() {
@@ -678,9 +714,9 @@ future_implementations() {
 
 main() {
     # setup_ssh_ed25519
+    open_ssh_install
     sys_upgrades
     unattended_upg
-    disable_root
     purge_telnet
     purge_nfs
     purge_whoopsie
@@ -703,6 +739,7 @@ main() {
     set_fail2ban
     # set_chkrootkit
     purge_useless_packages
+    disable_root
     future_implementations
 }
 
