@@ -73,7 +73,7 @@ fi
 echo -e "Install complete"
 echo -e "$install_date - Installed rustup on $(hostname). \n" >> $dir
 
-mkdir $vault_dir && mv $dir "$vault_dir/install_log.txt"
+# mkdir $vault_dir && mv $dir "$vault_dir/install_log.txt"
 
 rustup default stable
 
