@@ -139,8 +139,12 @@ esac
 apt update
 apt upgrade
 apt dist-upgrade
-apt install openssh-client
-apt install openssh-server
+
+open_ssh_install() {
+    apt install openssh-client
+    apt install openssh-server
+    echo -e "$install_date - openssh installed \n" > $dir
+}
 
 
 sys_upgrades() {
@@ -157,6 +161,7 @@ unattended_upg() {
     dpkg-reconfigure -plow unattended-upgrades
     apt-get install apt-listchanges -y # apt-listchanges  is  a  tool  to  show  what has been changed in a new version of a Debian package, as compared to the version currently installed on the system. It  does  this  by  extracting  the  relevant  entries  from  both  the  NEWS.Debian   and changelog[.Debian]  files,  usually  found  in /usr/share/doc/package, from Debian package archives.
     echo "$STEP_ICON unattended updates added"
+    echo -e "$install_date - unattended updates added \n" > $dir
     # This will create the file /etc/apt/apt.conf.d/20auto-upgrades
     # with the following contents:
     #############
@@ -170,6 +175,7 @@ purge_telnet() {
     # less layers = more sec
     apt-get --yes purge telnet
     echo "$STEP_ICON telnet disabled"
+    echo -e "$install_date - telnet disabled \n" > $dir
 }
 
 purge_nfs() {
@@ -177,12 +183,14 @@ purge_nfs() {
     # less layers = more sec
     apt-get --yes purge nfs-kernel-server nfs-common portmap rpcbind autofs
     echo "$STEP_ICON nfs disabled"
+    echo -e "$install_date - nfs disabled \n" > $dir
 }
 
 purge_whoopsie() { # disable telemetry - less layers to add more security     # Although whoopsie is useful(a crash log sender to ubuntu)
     # less layers = more sec
     apt-get --yes purge whoopsie
     echo "$STEP_ICON whoopsie disabled"
+    echo -e "$install_date - whoopsie disabled \n" > $dir
 }
 
 ### Verify if using ssh or openssh
@@ -191,6 +199,7 @@ harden_ssh_brute() {
     # This will only allow 6 connections every 30 seconds from the same IP address.
     ufw limit OpenSSH
     echo "$STEP_ICON ssh hardening added with rate limiting"
+    echo -e "$install_date - ssh hardening added with rate limiting \n" > $dir
 }
 
 
@@ -201,11 +210,13 @@ logwatch_reporter() {
     mv /etc/cron.daily/00logwatch /etc/cron.weekly/
     cd
     echo "$STEP_ICON logwatch installed with cronjob"
+    echo -e "$install_date - logwatch installed with cronjob \n" > $dir
 }
 
 purge_atd() {
     apt-get --yes purge at
     echo "$STEP_ICON purge atd"
+    echo -e "$install_date - purge atd \n" > $dir
     # less layers equals more security
 }
 
@@ -220,12 +231,14 @@ disable_avahi() {
     systemctl stop avahi-daemon.socket
     apt purge avahi-daemon
     echo "$STEP_ICON avahi disabled"
+    echo -e "$install_date - avahi disabled \n" > $dir
 }
 
 # Common Unix Print System (CUPS) : this enables a system to function as a print server
 disable_cups() {
     apt purge cups
     echo "$STEP_ICON cups disabled"
+    echo -e "$install_date - cups disabled \n" > $dir
 }
 
 # Lightweight Directory Access Protocol (LDAP) Server
@@ -237,14 +250,17 @@ slap_disable() {
         # Using apt-get purge to remove slapd and its configuration files
         sudo apt-get purge -y slapd
         echo "$STEP_ICON slapd has been removed successfully."
+        echo -e "$install_date - slapd has been removed successfully \n" > $dir
     else
-        echo "$STEP_ICON slapd is not installed. No action needed."
+        echo "$STEP_ICON slapd is not installed. No action needed"
+        echo -e "$install_date - slapd is not installed. No action needed \n" > $dir
     fi
 
     if ps aux | grep nfsd; then
     echo "NSF is installed in the computer"
     apt-get purge -y rpcbind
     echo "$STEP_ICON rpcbind removed" 
+    echo -e "$install_date - rpcbind removed \n" > $dir
     fi
 }
 
@@ -254,8 +270,10 @@ nfs_disable() {
         if ps aux | grep nfs-kernel-server; then
         echo "NFS is installed in the machine"
         systemctl disable nfs-kernel-server
+        echo -e "$install_date - disable nfs-kernel-server \n" > $dir
         else 
-        echo "$STEP_ICON NFS is not installed. No action needed."
+        echo "$STEP_ICON NFS is not installed. No action needed"
+        echo -e "$install_date - NFS is not installed. No action needed \n" > $dir
         fi
     fi
 }
@@ -287,6 +305,7 @@ disable_compilers() {
     chmod 000 /usr/bin/*c++
     chmod 000 /usr/bin/*g++
     echo "$STEP_ICON  differents compilers disabled" 
+    echo -e "$install_date - differents compilers disabled \n" > $dir
     # 755 to bring them back online
     # It is better to restrict access to them
     # unless you are working with a specific one
@@ -394,7 +413,7 @@ update_sshd_config() {
     else
         echo "Setting not found, adding..."
         echo "$new_line" >> "$file"
-        echo "Added $setting with value $value to $file."
+        echo "$STEP_ICON Added $setting with value $value to $file."
         echo -e "$install_date - Added $setting with value $value to $file. \n" > $dir
     fi
 }
@@ -695,6 +714,7 @@ future_implementations() {
 
 main() {
     # setup_ssh_ed25519
+    open_ssh_install
     sys_upgrades
     unattended_upg
     purge_telnet
