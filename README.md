@@ -13,8 +13,8 @@ providers is a good way to go to keep your passwords safe.
 ## Goal
 The objective of the project is to automate the installation process of Vaultwarden to a server.
 
-## How use the project
-
+## How to use the project
+To use the project, you need to be the admin for sudo commands and Ubuntu (not everything may work on debian) and clone this repo with the "git clone" command.
 
 #### Information 
 In the hardening file, the default SSH connection port will be set to 1754 using a variable. Or set the port in the script to your current Port.
